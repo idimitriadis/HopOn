@@ -90,18 +90,31 @@ with tab1:
     if search_project_id:
         filtered_df = filtered_df[filtered_df['id'].str.contains(search_project_id, case=False, na=False)]
 
+
     # Display filtered dataframe
     st.write("### Filtered Data")
-    st.dataframe(filtered_df)
+    st.dataframe(filtered_df,hide_index=True)
 
     # Select project
     selected_project = st.selectbox("Select a Project ID to View Organizations", filtered_df['id'].unique())
     st.write('Results: ' + str(filtered_df.shape[0]))
+    if search_project_id:
+        def format_row(row,df):
+            return "\n\n".join(f"**{col}:** {row[col]}" for col in df.columns)
+
+
+        # Convert entire DataFrame to formatted Markdown with line breaks
+        formatted_text = "\n\n---\n\n".join(format_row(row,filtered_df) for _, row in filtered_df.iterrows())
+
+        # Display formatted text using Markdown
+        st.subheader("Info for specific project")
+        st.markdown(formatted_text)
 
     if df_organizations is not None:
         st.write("### Participating Organizations")
         project_orgs = df_organizations[df_organizations['projectID'] == selected_project]
-        st.dataframe(project_orgs)
+        project_orgs = project_orgs.sort_values(by=['order'],ascending=True)
+        st.dataframe(project_orgs,hide_index=True)
 
 with tab2:
     st.header("Organisations")
