@@ -11,6 +11,7 @@ def load_projects():
     projects['startDate'] = pd.to_datetime(projects['startDate'], errors='coerce')
     projects['endDate'] = pd.to_datetime(projects['endDate'], errors='coerce')
     projects['id'] = projects['id'].astype('str')
+    projects = projects[['id','acronym','title','objective','cluster','topics','fundingScheme','startDate','endDate','legalBasis','grantDoi']]
     return projects
 
 
@@ -18,6 +19,7 @@ def load_projects():
 def load_orgs():
     orgs = pd.read_csv('orgs.csv', delimiter='|')
     orgs['projectID'] = orgs['projectID'].astype('str')
+    orgs = orgs[['name','activityType','city','country','role','organizationURL','projectID','order','ecContribution','contactForm']]
     return orgs
 
 
@@ -59,7 +61,7 @@ with tab1:
     st.write(f"**Max End Date:** {max_date}")
 
     # --- Filters ---
-    st.sidebar.header("Filters")
+    st.sidebar.header("Project Filters")
 
     # Date range filter
     start_date = st.sidebar.date_input("Start Date", min_value=min_date, max_value=max_date, value=min_date)
@@ -73,7 +75,7 @@ with tab1:
     funding_schemes = projects['fundingScheme'].unique().tolist()
     selected_funding_schemes = st.sidebar.multiselect("Select Funding Schemes", options=funding_schemes,
                                                       default=funding_schemes)
-
+    search_project_id = st.sidebar.text_input("Project ID")
     # Objective Keyword search
     search_objective = st.sidebar.text_input("Search Objective")
 
@@ -85,6 +87,8 @@ with tab1:
 
     if search_objective:
         filtered_df = filtered_df[filtered_df['objective'].str.contains(search_objective, case=False, na=False)]
+    if search_project_id:
+        filtered_df = filtered_df[filtered_df['id'].str.contains(search_project_id, case=False, na=False)]
 
     # Display filtered dataframe
     st.write("### Filtered Data")
@@ -108,13 +112,15 @@ with tab2:
 
     org_types = df_organizations['activityType'].unique().tolist()
     selected_types = st.multiselect("Select Organisation Types", options=org_types, default=org_types)
-
+    org_roles = df_organizations['role'].unique().tolist()
+    selected_roles = st.multiselect("Select Organisation Role",options=org_roles,default='coordinator')
     # Organization name search
     search_org_name = st.text_input("Search Organisation Name")
 
     # Apply filters
     filtered_orgs = df_organizations[df_organizations['country'].isin(selected_countries)]
     filtered_orgs = filtered_orgs[filtered_orgs['activityType'].isin(selected_types)]
+    filtered_orgs  = filtered_orgs[filtered_orgs['role'].isin(selected_roles)]
 
     if search_org_name:
         filtered_orgs = filtered_orgs[filtered_orgs['name'].str.contains(search_org_name, case=False, na=False)]
