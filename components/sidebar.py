@@ -53,7 +53,7 @@ def render_sidebar(projects):
     if st.session_state.confirming_delete:
         # st.dialog is a function that returns True if the user clicks the primary button.
         # The content of the dialog is defined by its arguments.
-        if st.dialog("Confirm Deletion", title=f"Delete User: {selected_username}?"):
+        if st.dialog(title=f"Delete User: {selected_username}?"):
             st.warning(f"Are you sure you want to permanently delete **{selected_username}**? This will remove all their saved searches and favorites.")
             if st.button("Yes, Delete Permanently", type="primary"):
                 user_id_to_delete = user_options[selected_username]
