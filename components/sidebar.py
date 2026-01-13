@@ -6,6 +6,9 @@ def render_sidebar(projects):
 
     if projects.empty:
         return {}
+    
+    # Watchlist toggle
+    show_watchlist = st.sidebar.checkbox("Show Favorites Only")
 
     min_date = projects['startDate'].min()
     max_date = projects['endDate'].max()
@@ -31,6 +34,7 @@ def render_sidebar(projects):
     search_objective = st.sidebar.text_input("Search Objective")
 
     return {
+        'show_watchlist': show_watchlist,
         'start_date': start_date,
         'end_date': end_date,
         'selected_clusters': selected_clusters,

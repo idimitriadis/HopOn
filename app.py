@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from utils.data_loader import load_projects, load_orgs
+from utils.db import get_watchlist
 from components.sidebar import render_sidebar
 from components.project_list import render_project_list
 
@@ -49,6 +50,11 @@ if not projects.empty and filters:
         filtered_df = filtered_df[filtered_df['objective'].str.contains(filters['search_objective'], case=False, na=False)]
     if filters['search_id']:
         filtered_df = filtered_df[filtered_df['id'].str.contains(filters['search_id'], case=False, na=False)]
+    
+    # Watchlist Filter
+    if filters.get('show_watchlist'):
+        watchlist_ids = get_watchlist()
+        filtered_df = filtered_df[filtered_df['id'].isin(watchlist_ids)]
 else:
     filtered_df = projects
 

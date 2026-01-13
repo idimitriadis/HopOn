@@ -17,7 +17,17 @@ class TestSidebar(unittest.TestCase):
         })
         
         # Setup mock returns for sidebar widgets
-        # Order in app.py: start_date, end_date, clusters, funding_schemes, project_id, objective
+        # Order in implementation:
+        # 1. header
+        # 2. checkbox (Watchlist) - NEW
+        # 3. date_input (Start)
+        # 4. date_input (End)
+        # 5. multiselect (Clusters)
+        # 6. multiselect (Funding)
+        # 7. text_input (ID)
+        # 8. text_input (Objective)
+        
+        mock_st.sidebar.checkbox.return_value = True
         mock_st.sidebar.date_input.side_effect = [date(2024, 1, 1), date(2027, 1, 1)] 
         mock_st.sidebar.multiselect.side_effect = [['C1'], ['F1']] 
         mock_st.sidebar.text_input.side_effect = ['123', 'keyword'] 
@@ -27,6 +37,7 @@ class TestSidebar(unittest.TestCase):
 
         # Assertions
         self.assertIsNotNone(filters)
+        self.assertTrue(filters['show_watchlist'])
         self.assertEqual(filters['start_date'], date(2024, 1, 1))
         self.assertEqual(filters['end_date'], date(2027, 1, 1))
         self.assertEqual(filters['selected_clusters'], ['C1'])
@@ -36,6 +47,7 @@ class TestSidebar(unittest.TestCase):
         
         # Verify widget calls
         self.assertTrue(mock_st.sidebar.header.called)
+        self.assertTrue(mock_st.sidebar.checkbox.called)
 
 if __name__ == '__main__':
     unittest.main()
