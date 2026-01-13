@@ -35,9 +35,10 @@
     - [x] Sub-task: Instrument DB and UI actions.
 
 ## Phase 4: Multi-User & Saved Search
-- [ ] Task: Add "Save Search" UI to Sidebar.
-    - [ ] Sub-task: Create text input for "Search Name" and "Save" button.
-    - [ ] Sub-task: Serialize current filter state (JSON) and save to DB.
-- [ ] Task: Add "Load Search" UI to Sidebar.
-    - [ ] Sub-task: specific dropdown to select saved searches.
-    - [ ] Sub-task: Logic to parse JSON and update session state widgets.
+- [x] Task: Add "Save Search" UI to Sidebar.
+    - [x] Sub-task: Create text input for "Search Name" and "Save" button.
+    - [x] Sub-task: Serialize current filter state (JSON) and save to DB.
+- [x] Task: Add "Load Search" UI to Sidebar.
+    - [x] Sub-task: specific dropdown to select saved searches.
+    - [x] Sub-task: Logic to parse JSON and update session state widgets.
+    - [x] Sub-task: Add "Delete" button to manage saved searches.
