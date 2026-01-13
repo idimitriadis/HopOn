@@ -51,21 +51,21 @@ def render_sidebar(projects):
 
     # --- User Deletion Dialog ---
     if st.session_state.confirming_delete:
-        with st.dialog("Confirm Deletion"):
-            st.warning(f"Are you sure you want to delete **{selected_username}**? This will remove all their saved searches and favorites.")
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button("Yes, Delete", type="primary"):
-                    user_id_to_delete = user_options[selected_username]
-                    delete_user(user_id_to_delete)
-                    st.session_state.confirming_delete = False
-                    on_user_change()
-                    st.success(f"Deleted {selected_username}")
-                    st.rerun()
-            with col2:
-                if st.button("Cancel"):
-                    st.session_state.confirming_delete = False
-                    st.rerun()
+        # st.dialog is a function that returns True if the user clicks the primary button.
+        # The content of the dialog is defined by its arguments.
+        if st.dialog("Confirm Deletion", title=f"Delete User: {selected_username}?"):
+            st.warning(f"Are you sure you want to permanently delete **{selected_username}**? This will remove all their saved searches and favorites.")
+            if st.button("Yes, Delete Permanently", type="primary"):
+                user_id_to_delete = user_options[selected_username]
+                delete_user(user_id_to_delete)
+                st.session_state.confirming_delete = False
+                on_user_change()
+                st.success(f"Deleted {selected_username}")
+                st.rerun()
+        else:
+            # This block runs if the user closes the dialog (e.g., clicks outside, presses Esc)
+            st.session_state.confirming_delete = False
+            st.rerun()
     
     # --- Profile Management UI ---
     with st.sidebar.popover("⚙️ Manage Profiles", use_container_width=True):
