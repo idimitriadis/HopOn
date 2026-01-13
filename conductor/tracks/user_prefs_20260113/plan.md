@@ -42,3 +42,9 @@
     - [x] Sub-task: specific dropdown to select saved searches.
     - [x] Sub-task: Logic to parse JSON and update session state widgets.
     - [x] Sub-task: Add "Delete" button to manage saved searches.
+
+## Phase 4.5: User Profiles (Refactor)
+- [x] Task: Implement "Honor System" User Profiles.
+    - [x] Sub-task: Refactor DB to add `users` table and Foreign Keys.
+    - [x] Sub-task: Add Profile Selector and Creator in Sidebar.
+    - [x] Sub-task: Filter Watchlist and Saved Searches by selected User ID.

@@ -37,6 +37,7 @@ if not df_organizations.empty:
 
 # Render Sidebar and get filters
 filters = render_sidebar(projects)
+user_id = filters.get('user_id')
 
 # Apply filters
 if not projects.empty and filters:
@@ -55,8 +56,13 @@ if not projects.empty and filters:
     
     # Watchlist Filter
     if filters.get('show_watchlist'):
-        watchlist_ids = get_watchlist()
-        filtered_df = filtered_df[filtered_df['id'].isin(watchlist_ids)]
+        if user_id:
+            watchlist_ids = get_watchlist(user_id)
+            filtered_df = filtered_df[filtered_df['id'].isin(watchlist_ids)]
+        else:
+             # If no user, watchlist filter results in empty list or ignore? 
+             # Let's say empty logic: You can't see favorites if not logged in.
+             filtered_df = filtered_df[filtered_df['id'].isin([])]
 else:
     filtered_df = projects
 
@@ -73,7 +79,7 @@ with tab1:
         st.write(f"**Min Start Date:** {min_date}")
         st.write(f"**Max End Date:** {max_date}")
 
-    selected_project = render_project_list(filtered_df)
+    selected_project = render_project_list(filtered_df, user_id)
 
     # Detail View
     if filters and filters.get('search_id'):

@@ -1,10 +1,46 @@
 import streamlit as st
 import pandas as pd
 import json
-from utils.db import save_search, get_saved_searches, delete_search
+from utils.db import save_search, get_saved_searches, delete_search, get_users, create_user
 from utils.logger import logger
 
 def render_sidebar(projects):
+    st.sidebar.header("User Profile")
+    
+    # --- 0. User Profile Management ---
+    users = get_users() # [{id:1, username:'Vasilis'}, ...]
+    user_options = {u['username']: u['id'] for u in users}
+    
+    # Select User
+    selected_username = st.sidebar.selectbox(
+        "Current User", 
+        options=list(user_options.keys()),
+        index=0 if user_options else None
+    )
+    
+    # Store current user ID in session state for other components
+    if selected_username:
+        st.session_state['current_user_id'] = user_options[selected_username]
+        current_user_id = user_options[selected_username]
+    else:
+        st.session_state['current_user_id'] = None
+        current_user_id = None
+
+    # Add New User
+    with st.sidebar.expander("Add New Profile"):
+        new_username = st.text_input("New Username")
+        if st.button("Create Profile"):
+            if new_username:
+                if new_username in user_options:
+                    st.error("User already exists.")
+                else:
+                    create_user(new_username)
+                    st.success(f"Created {new_username}")
+                    st.rerun()
+            else:
+                st.warning("Enter a name.")
+
+    st.sidebar.markdown("---")
     st.sidebar.header("Project Filters")
 
     if projects.empty:
@@ -36,54 +72,55 @@ def render_sidebar(projects):
         st.session_state['filter_objective'] = ""
 
     # --- 2. Saved Search UI (Load) ---
-    st.sidebar.subheader("Saved Searches")
-    saved_searches = get_saved_searches()
-    
-    # Create options dict for dropdown {name: id}
-    search_options = {s['name']: s for s in saved_searches}
-    selected_search_name = st.sidebar.selectbox(
-        "Load Search", 
-        options=[""] + list(search_options.keys()),
-        index=0,
-        key="load_search_dropdown" # Separate key to avoid conflicts
-    )
-    
-    # Load Logic
-    if selected_search_name and selected_search_name != "":
-        col1, col2 = st.sidebar.columns(2)
-        with col1:
-            if st.button("Apply"):
-                search_data = search_options[selected_search_name]
-                try:
-                    filters = json.loads(search_data['filters'])
-                    
-                    # Update Session State
-                    st.session_state['filter_watchlist'] = filters.get('show_watchlist', False)
-                    
-                    # Handle dates (convert string back to date object if needed, though date_input handles iso strings often)
-                    # Ideally we cast to date objects to be safe
-                    if filters.get('start_date'):
-                        st.session_state['filter_start_date'] = pd.to_datetime(filters['start_date']).date()
-                    if filters.get('end_date'):
-                        st.session_state['filter_end_date'] = pd.to_datetime(filters['end_date']).date()
-                        
-                    st.session_state['filter_clusters'] = filters.get('selected_clusters', default_clusters)
-                    st.session_state['filter_funding'] = filters.get('selected_funding_schemes', default_funding)
-                    st.session_state['filter_id'] = filters.get('search_id', "")
-                    st.session_state['filter_objective'] = filters.get('search_objective', "")
-                    
-                    logger.info(f"Applied saved search: {selected_search_name}")
-                    st.rerun()
-                except Exception as e:
-                    logger.error(f"Failed to load search: {e}")
-                    st.error("Error loading search.")
+    if current_user_id:
+        st.sidebar.subheader("Saved Searches")
+        saved_searches = get_saved_searches(current_user_id)
         
-        with col2:
-            if st.button("Delete"):
-                search_id = search_options[selected_search_name]['id']
-                delete_search(search_id)
-                st.success(f"Deleted '{selected_search_name}'")
-                st.rerun()
+        # Create options dict for dropdown {name: id}
+        search_options = {s['name']: s for s in saved_searches}
+        selected_search_name = st.sidebar.selectbox(
+            "Load Search", 
+            options=[""] + list(search_options.keys()),
+            index=0,
+            key="load_search_dropdown" # Separate key to avoid conflicts
+        )
+        
+        # Load Logic
+        if selected_search_name and selected_search_name != "":
+            col1, col2 = st.sidebar.columns(2)
+            with col1:
+                if st.button("Apply"):
+                    search_data = search_options[selected_search_name]
+                    try:
+                        filters = json.loads(search_data['filters'])
+                        
+                        # Update Session State
+                        st.session_state['filter_watchlist'] = filters.get('show_watchlist', False)
+                        
+                        # Handle dates (convert string back to date object if needed, though date_input handles iso strings often)
+                        # Ideally we cast to date objects to be safe
+                        if filters.get('start_date'):
+                            st.session_state['filter_start_date'] = pd.to_datetime(filters['start_date']).date()
+                        if filters.get('end_date'):
+                            st.session_state['filter_end_date'] = pd.to_datetime(filters['end_date']).date()
+                            
+                        st.session_state['filter_clusters'] = filters.get('selected_clusters', default_clusters)
+                        st.session_state['filter_funding'] = filters.get('selected_funding_schemes', default_funding)
+                        st.session_state['filter_id'] = filters.get('search_id', "")
+                        st.session_state['filter_objective'] = filters.get('search_objective', "")
+                        
+                        logger.info(f"Applied saved search: {selected_search_name} for user {current_user_id}")
+                        st.rerun()
+                    except Exception as e:
+                        logger.error(f"Failed to load search: {e}")
+                        st.error("Error loading search.")
+            
+            with col2:
+                if st.button("Delete"):
+                    search_id = search_options[selected_search_name]['id']
+                    delete_search(search_id)
+                    st.success(f"Deleted '{selected_search_name}'")
+                    st.rerun()
 
     # --- 3. Filter Widgets ---
     # Watchlist toggle
@@ -104,26 +141,27 @@ def render_sidebar(projects):
     search_objective = st.sidebar.text_input("Search Objective", key='filter_objective')
 
     # --- 4. Save Search UI ---
-    st.sidebar.markdown("---")
-    with st.sidebar.expander("Save Current Search"):
-        new_search_name = st.text_input("Name for this search")
-        if st.button("Save Search"):
-            if new_search_name:
-                # Serialize filters
-                current_filters = {
-                    'show_watchlist': show_watchlist,
-                    'start_date': str(start_date),
-                    'end_date': str(end_date),
-                    'selected_clusters': selected_clusters,
-                    'selected_funding_schemes': selected_funding_schemes,
-                    'search_id': search_project_id,
-                    'search_objective': search_objective
-                }
-                save_search(new_search_name, json.dumps(current_filters))
-                st.success(f"Saved: {new_search_name}")
-                st.rerun() # Rerun to update the Load dropdown
-            else:
-                st.warning("Please enter a name.")
+    if current_user_id:
+        st.sidebar.markdown("---")
+        with st.sidebar.expander("Save Current Search"):
+            new_search_name = st.text_input("Name for this search")
+            if st.button("Save Search"):
+                if new_search_name:
+                    # Serialize filters
+                    current_filters = {
+                        'show_watchlist': show_watchlist,
+                        'start_date': str(start_date),
+                        'end_date': str(end_date),
+                        'selected_clusters': selected_clusters,
+                        'selected_funding_schemes': selected_funding_schemes,
+                        'search_id': search_project_id,
+                        'search_objective': search_objective
+                    }
+                    save_search(new_search_name, json.dumps(current_filters), current_user_id)
+                    st.success(f"Saved: {new_search_name}")
+                    st.rerun() # Rerun to update the Load dropdown
+                else:
+                    st.warning("Please enter a name.")
 
     return {
         'show_watchlist': show_watchlist,
@@ -132,5 +170,6 @@ def render_sidebar(projects):
         'selected_clusters': selected_clusters,
         'selected_funding_schemes': selected_funding_schemes,
         'search_id': search_project_id,
-        'search_objective': search_objective
+        'search_objective': search_objective,
+        'user_id': current_user_id
     }
