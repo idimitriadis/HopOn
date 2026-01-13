@@ -9,7 +9,7 @@
     - [ ] Sub-task: Implement `render_sidebar` function that returns filter values.
 - [x] Task: Extract Project List logic to `components/project_list.py`. e215eb7
     - [ ] Sub-task: Implement `render_project_list` taking dataframe as input.
-- [ ] Task: Update `app.py` to use the new modules.
+- [x] Task: Update `app.py` to use the new modules. 20ecb50
     - [ ] Sub-task: Verify application functionality matches original.
 
 ## Phase 2: SQLite Backend Setup
