@@ -7,7 +7,7 @@
     - [ ] Sub-task: Implement `load_projects` and `load_orgs` in new module.
 - [x] Task: Extract Sidebar/Filter logic to `components/sidebar.py`. e7579c2
     - [ ] Sub-task: Implement `render_sidebar` function that returns filter values.
-- [ ] Task: Extract Project List logic to `components/project_list.py`.
+- [x] Task: Extract Project List logic to `components/project_list.py`. e215eb7
     - [ ] Sub-task: Implement `render_project_list` taking dataframe as input.
 - [ ] Task: Update `app.py` to use the new modules.
     - [ ] Sub-task: Verify application functionality matches original.
