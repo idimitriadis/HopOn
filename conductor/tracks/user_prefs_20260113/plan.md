@@ -13,11 +13,11 @@
     - [ ] Sub-task: Verify application functionality matches original.
 
 ## Phase 2: SQLite Backend Setup
-- [ ] Task: Create `utils/db.py` for database interactions.
-    - [ ] Sub-task: Write Tests for DB connection and schema creation.
-    - [ ] Sub-task: Implement `init_db` to create `watchlist` and `saved_searches` tables.
-    - [ ] Sub-task: Implement helper functions: `add_to_watchlist`, `remove_from_watchlist`, `get_watchlist`.
-    - [ ] Sub-task: Implement helper functions: `save_search`, `get_saved_searches`, `delete_search`.
+- [x] Task: Create `utils/db.py` for database interactions. d6253d0
+    - [x] Sub-task: Write Tests for DB connection and schema creation.
+    - [x] Sub-task: Implement `init_db` to create `watchlist` and `saved_searches` tables.
+    - [x] Sub-task: Implement helper functions: `add_to_watchlist`, `remove_from_watchlist`, `get_watchlist`.
+    - [x] Sub-task: Implement helper functions: `save_search`, `get_saved_searches`, `delete_search`.
 
 ## Phase 3: Watchlist Implementation
 - [ ] Task: Integrate Watchlist UI in `components/project_list.py`.
