@@ -25,17 +25,50 @@ def render_sidebar(projects):
     users = get_users() 
     user_options = {u['username']: u['id'] for u in users}
     
-    # Select User
+    # This callback ensures that when a user switches profiles, the filters are wiped clean.
+    def on_user_change():
+        reset_filters_to_defaults()
+
+    # Determine the index for the selectbox. If a new user was just created, find their index.
+    user_names = list(user_options.keys())
+    try:
+        index = user_names.index(st.session_state.get('newly_created_user', ''))
+        del st.session_state['newly_created_user'] # Clean up state
+    except ValueError:
+        index = 0
+
     selected_username = st.sidebar.selectbox(
         "Current User", 
-        options=list(user_options.keys()),
-        index=0 if user_options else None,
+        options=user_names,
+        index=index,
         on_change=on_user_change,
         key="user_selector"
     )
+
+    # Initialize confirmation state
+    if 'confirming_delete' not in st.session_state:
+        st.session_state.confirming_delete = False
+
+    # --- User Deletion Modal ---
+    if st.session_state.confirming_delete:
+        with st.modal("Confirm Deletion"):
+            st.warning(f"Are you sure you want to delete **{selected_username}**? This will remove all their saved searches and favorites.")
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("Yes, Delete", type="primary"):
+                    user_id_to_delete = user_options[selected_username]
+                    delete_user(user_id_to_delete)
+                    st.session_state.confirming_delete = False
+                    on_user_change()
+                    st.success(f"Deleted {selected_username}")
+                    st.rerun()
+            with col2:
+                if st.button("Cancel"):
+                    st.session_state.confirming_delete = False
+                    st.rerun()
     
-    # Combined "Manage" popover for Add/Delete, placed directly below the selectbox
-    with st.sidebar.popover("⚙️ Manage", use_container_width=True):
+    # --- Profile Management UI ---
+    with st.sidebar.popover("⚙️ Manage Profiles", use_container_width=True):
         st.markdown("**Add New Profile**")
         new_username = st.text_input("New Username", key="new_user_input")
         if st.button("Create"):
@@ -44,10 +77,9 @@ def render_sidebar(projects):
                     st.error("User exists.")
                 else:
                     create_user(new_username)
-                    st.success(f"Created {new_username}")
-                    # Auto-select the new user after creation
-                    st.session_state['user_selector'] = new_username
-                    on_user_change() # Reset filters for the new user
+                    # Instead of setting state, we store the name to find its index on rerun
+                    st.session_state['newly_created_user'] = new_username
+                    on_user_change() 
                     st.rerun()
             else:
                 st.warning("Enter name.")
@@ -55,18 +87,12 @@ def render_sidebar(projects):
         st.markdown("---")
         st.markdown("**Delete Selected Profile**")
         if selected_username:
-            st.warning(f"This will delete **{selected_username}** and all their saved data.")
-            if st.button("Confirm Delete", type="primary"):
-                user_id_to_delete = user_options[selected_username]
-                delete_user(user_id_to_delete)
-                st.success(f"Deleted {selected_username}")
-                # After deletion, user_selector will be invalid, 
-                # so we must reset filters and rerun. The selectbox will pick the first user.
-                on_user_change()
+            if st.button("Delete User", type="secondary"):
+                st.session_state.confirming_delete = True
                 st.rerun()
 
     # Store current user ID in session state
-    current_user_id = user_options.get(st.session_state.get('user_selector'))
+    current_user_id = user_options.get(selected_username)
     st.session_state['current_user_id'] = current_user_id
     
     st.sidebar.markdown("---")
