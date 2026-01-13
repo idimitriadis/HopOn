@@ -83,7 +83,11 @@ def render_sidebar(projects):
     all_funding = projects['fundingScheme'].unique().tolist()
     selected_funding_schemes = st.sidebar.multiselect("Select Funding Schemes", options=all_funding, key='filter_funding')
     search_project_id = st.sidebar.text_input("Project ID", key='filter_id')
-    search_objective = st.sidebar.text_input("Search Objective", key='filter_objective')
+    search_objective = st.sidebar.text_input(
+        "Semantic Search (Smart)", 
+        key='filter_objective',
+        help="Type a concept (e.g., 'Cancer', 'Green Energy'). AI will find relevant projects even if keywords don't match exactly."
+    )
 
     # --- Saved Search UI ---
     if current_user_id:

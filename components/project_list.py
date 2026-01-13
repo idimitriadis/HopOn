@@ -42,6 +42,11 @@ def render_project_list(filtered_df, user_id):
         # Prepend base URL to DOI, handling NaNs
         df_display['grantDoi'] = df_display['grantDoi'].apply(lambda x: f"https://doi.org/{x}" if pd.notnull(x) and str(x).strip() != '' else None)
 
+    # Reorder columns: Move Match Score to front if present
+    if 'relevance_score' in df_display.columns:
+        cols = ['Favorite', 'relevance_score'] + [c for c in df_display.columns if c not in ['Favorite', 'relevance_score']]
+        df_display = df_display[cols]
+
     # Display editor
     # We disable editing if no user is selected
     disabled_cols = [col for col in df_display.columns if col != 'Favorite']
@@ -57,6 +62,13 @@ def render_project_list(filtered_df, user_id):
                 help="Select your favorite projects (Login required)",
                 default=False,
                 disabled=(user_id is None)
+            ),
+            "relevance_score": st.column_config.ProgressColumn(
+                "Match Score",
+                help="AI Relevance Score (Semantic Similarity)",
+                format="%.2f",
+                min_value=0,
+                max_value=1
             ),
             "grantDoi": st.column_config.LinkColumn(
                 "DOI Link",

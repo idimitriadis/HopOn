@@ -10,6 +10,7 @@ if 'logger_configured' not in st.session_state:
 
 from utils.data_loader import load_projects, load_orgs
 from utils.db import get_watchlist
+from utils.matcher import ProjectMatcher
 from components.sidebar import render_sidebar
 from components.project_list import render_project_list
 from components.metrics import render_metrics
@@ -17,6 +18,10 @@ from components.charts import render_charts, render_coordinator_stats, render_pr
 
 st.set_page_config(page_title="HopOn Projects", layout="wide")
 logger.info("Application started/reloaded.")
+
+# --- Semantic Search Initialization ---
+if 'project_matcher' not in st.session_state:
+    st.session_state['project_matcher'] = ProjectMatcher()
 
 # Dictionary mapping country codes to country names
 country_mapping = {
@@ -36,6 +41,12 @@ country_mapping = {
 # Title
 st.title("Available Hopon Projects")
 projects = load_projects()
+
+# --- Semantic Encoding ---
+if 'project_matcher' in st.session_state and st.session_state['project_matcher'].embeddings is None and not projects.empty:
+    with st.spinner("Initializing AI Search Engine... (First run only)"):
+        st.session_state['project_matcher'].encode_projects(projects)
+
 df_organizations = load_orgs()
 
 # Filter organizations to keep only those in Europe
@@ -69,7 +80,11 @@ if not projects.empty and filters:
 
     # Text search filters
     if filters['search_objective']:
-        filtered_df = filtered_df[filtered_df['objective'].str.contains(filters['search_objective'], case=False, na=False)]
+        # Semantic Search & Ranking
+        if 'project_matcher' in st.session_state:
+            filtered_df = st.session_state['project_matcher'].search(filters['search_objective'], filtered_df)
+            st.info(f"Showing results for '{filters['search_objective']}' sorted by AI Relevance.")
+    
     if filters['search_id']:
         filtered_df = filtered_df[filtered_df['id'].str.contains(filters['search_id'], case=False, na=False)]
     
