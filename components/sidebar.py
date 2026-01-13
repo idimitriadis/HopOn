@@ -49,9 +49,9 @@ def render_sidebar(projects):
     if 'confirming_delete' not in st.session_state:
         st.session_state.confirming_delete = False
 
-    # --- User Deletion Modal ---
+    # --- User Deletion Dialog ---
     if st.session_state.confirming_delete:
-        with st.modal("Confirm Deletion"):
+        with st.dialog("Confirm Deletion"):
             st.warning(f"Are you sure you want to delete **{selected_username}**? This will remove all their saved searches and favorites.")
             col1, col2 = st.columns(2)
             with col1:
