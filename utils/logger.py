@@ -24,7 +24,7 @@ logger.add(sys.stderr, format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <leve
 
 # Add file handler
 log_file_path = os.path.join(log_dir, "hopon.log")
-logger.add(log_file_path, rotation="5 MB", retention="10 days", compression="zip", level="INFO")
+logger.add(log_file_path, rotation="5 MB", retention="10 days", compression="zip", level="INFO", mode="w")
 
 def get_logger():
     return logger
