@@ -4,8 +4,10 @@ from utils.data_loader import load_projects, load_orgs
 from utils.db import get_watchlist
 from components.sidebar import render_sidebar
 from components.project_list import render_project_list
+from utils.logger import logger
 
 st.set_page_config(page_title="HopOn Projects", layout="wide")
+logger.info("Application started/reloaded.")
 
 # Dictionary mapping country codes to country names
 country_mapping = {

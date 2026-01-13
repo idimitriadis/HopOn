@@ -65,6 +65,14 @@ LICENSE.md
 opinions/chatgpt.md
 opinions/claude.md
 
+# Logs
+logs/
+*.log
+
+# Database
+*.db
+*.sqlite3
+
 # Conductor Wizard State
 conductor/setup_state.json
 
@@ -80,3 +88,7 @@ memory/INDEX.md
 # Conductor
 conductor/
 updates_to_be_done.md
+
+
+#vscode related stuff
+/.vscode

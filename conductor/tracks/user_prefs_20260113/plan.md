@@ -19,15 +19,22 @@
     - [x] Sub-task: Implement helper functions: `add_to_watchlist`, `remove_from_watchlist`, `get_watchlist`.
     - [x] Sub-task: Implement helper functions: `save_search`, `get_saved_searches`, `delete_search`.
 
-## Phase 3: Watchlist Implementation
+## Phase 3: Watchlist Implementation [checkpoint: 6bd6bed]
 - [x] Task: Integrate Watchlist UI in `components/project_list.py`. 3d1890d
-    - [ ] Sub-task: Add "Star" column/button to the dataframe display or custom card layout.
-    - [ ] Sub-task: Connect button click to `utils/db.py` functions.
+    - [x] Sub-task: Add "Star" column/button to the dataframe display or custom card layout.
+    - [x] Sub-task: Connect button click to `utils/db.py` functions.
 - [x] Task: Add "Watchlist" Filter. 82aaa5c
     - [x] Sub-task: Update `components/sidebar.py` to include a "Show Favorites Only" toggle.
     - [x] Sub-task: Update filter logic to intersect with `get_watchlist()` IDs.
 
-## Phase 4: Saved Search Implementation
+## Phase 3.5: Fixes & Logging
+- [~] Task: Fix Double-Click Bug in Watchlist.
+    - [ ] Sub-task: Implement `st.rerun()` on change detection.
+- [x] Task: Implement Interaction Logging.
+    - [x] Sub-task: Configure basic logging using `loguru`.
+    - [x] Sub-task: Instrument DB and UI actions.
+
+## Phase 4: Multi-User & Saved Search
 - [ ] Task: Add "Save Search" UI to Sidebar.
     - [ ] Sub-task: Create text input for "Search Name" and "Save" button.
     - [ ] Sub-task: Serialize current filter state (JSON) and save to DB.
