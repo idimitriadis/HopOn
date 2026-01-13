@@ -2,7 +2,7 @@
 
 ## Phase 1: Modular Refactoring
 - [x] Task: Create `utils/` and `components/` directories. 95bec1a
-- [ ] Task: Extract data loading logic to `utils/data_loader.py`.
+- [x] Task: Extract data loading logic to `utils/data_loader.py`. a2bafdc
     - [ ] Sub-task: Write Tests for data loader.
     - [ ] Sub-task: Implement `load_projects` and `load_orgs` in new module.
 - [ ] Task: Extract Sidebar/Filter logic to `components/sidebar.py`.
