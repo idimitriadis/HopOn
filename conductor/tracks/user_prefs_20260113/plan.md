@@ -28,8 +28,8 @@
     - [x] Sub-task: Update filter logic to intersect with `get_watchlist()` IDs.
 
 ## Phase 3.5: Fixes & Logging
-- [~] Task: Fix Double-Click Bug in Watchlist.
-    - [ ] Sub-task: Implement `st.rerun()` on change detection.
+- [x] Task: Fix Double-Click Bug in Watchlist.
+    - [x] Sub-task: Implement `st.rerun()` on change detection.
 - [x] Task: Implement Interaction Logging.
     - [x] Sub-task: Configure basic logging using `loguru`.
     - [x] Sub-task: Instrument DB and UI actions.
@@ -48,3 +48,16 @@
     - [x] Sub-task: Refactor DB to add `users` table and Foreign Keys.
     - [x] Sub-task: Add Profile Selector and Creator in Sidebar.
     - [x] Sub-task: Filter Watchlist and Saved Searches by selected User ID.
+
+## Phase 5: UI Polish & Bug Fixes
+- [x] Task: Refine User Profile UI.
+    - [x] Sub-task: Implement auto-selection of new users.
+    - [x] Sub-task: Implement filter reset when switching users.
+    - [x] Sub-task: Add a modal/dialog confirmation for user deletion.
+- [x] Task: Stabilize State Management.
+    - [x] Sub-task: Resolve recurring StreamlitAPIException by implementing a correct two-step state loading pattern.
+    - [x] Sub-task: Programmatically verify the state loading fix.
+- [x] Task: Fix NameError for on_user_change due to incorrect scope.
+- [x] Task: Fix TypeError by replacing st.modal with st.dialog.
+- [x] Task: Fix TypeError related to multiple 	itle arguments in st.dialog.
+
