@@ -20,7 +20,7 @@
     - [x] Sub-task: Implement helper functions: `save_search`, `get_saved_searches`, `delete_search`.
 
 ## Phase 3: Watchlist Implementation
-- [ ] Task: Integrate Watchlist UI in `components/project_list.py`.
+- [x] Task: Integrate Watchlist UI in `components/project_list.py`. 3d1890d
     - [ ] Sub-task: Add "Star" column/button to the dataframe display or custom card layout.
     - [ ] Sub-task: Connect button click to `utils/db.py` functions.
 - [ ] Task: Add "Watchlist" Filter.
