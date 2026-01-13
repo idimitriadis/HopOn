@@ -1,6 +1,6 @@
 # Implementation Plan - User Preferences
 
-## Phase 1: Modular Refactoring
+## Phase 1: Modular Refactoring [checkpoint: 0168f26]
 - [x] Task: Create `utils/` and `components/` directories. 95bec1a
 - [x] Task: Extract data loading logic to `utils/data_loader.py`. a2bafdc
     - [ ] Sub-task: Write Tests for data loader.
