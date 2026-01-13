@@ -41,14 +41,24 @@ user_id = filters.get('user_id')
 
 # Apply filters
 if not projects.empty and filters:
-    filtered_df = projects[
-        (projects['startDate'] >= pd.to_datetime(filters['start_date'])) &
-        (projects['endDate'] <= pd.to_datetime(filters['end_date'])) &
-        (projects['endDate'] > pd.to_datetime("2027-09-25"))  # Filter end date > 25th Sep 2027
-        ]
-    filtered_df = filtered_df[filtered_df['cluster'].isin(filters['selected_clusters'])]
-    filtered_df = filtered_df[filtered_df['fundingScheme'].isin(filters['selected_funding_schemes'])]
+    filtered_df = projects.copy() # Start with a copy
+    
+    # Date filters (only if dates are selected)
+    if filters['start_date']:
+        filtered_df = filtered_df[filtered_df['startDate'] >= pd.to_datetime(filters['start_date'])]
+    if filters['end_date']:
+        filtered_df = filtered_df[filtered_df['endDate'] <= pd.to_datetime(filters['end_date'])]
 
+    # Always apply this mandatory filter
+    filtered_df = filtered_df[filtered_df['endDate'] > pd.to_datetime("2027-09-25")]
+
+    # Cluster and Funding Scheme filters
+    if filters['selected_clusters']:
+        filtered_df = filtered_df[filtered_df['cluster'].isin(filters['selected_clusters'])]
+    if filters['selected_funding_schemes']:
+        filtered_df = filtered_df[filtered_df['fundingScheme'].isin(filters['selected_funding_schemes'])]
+
+    # Text search filters
     if filters['search_objective']:
         filtered_df = filtered_df[filtered_df['objective'].str.contains(filters['search_objective'], case=False, na=False)]
     if filters['search_id']:
@@ -60,9 +70,7 @@ if not projects.empty and filters:
             watchlist_ids = get_watchlist(user_id)
             filtered_df = filtered_df[filtered_df['id'].isin(watchlist_ids)]
         else:
-             # If no user, watchlist filter results in empty list or ignore? 
-             # Let's say empty logic: You can't see favorites if not logged in.
-             filtered_df = filtered_df[filtered_df['id'].isin([])]
+            filtered_df = filtered_df[filtered_df['id'].isin([])]
 else:
     filtered_df = projects
 

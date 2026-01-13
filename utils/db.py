@@ -80,6 +80,24 @@ def create_user(username, db_path=DEFAULT_DB_PATH):
     finally:
         conn.close()
 
+def delete_user(user_id, db_path=DEFAULT_DB_PATH):
+    conn = get_connection(db_path)
+    c = conn.cursor()
+    try:
+        # Manual Cascade Deletion
+        c.execute("DELETE FROM watchlist WHERE user_id = ?", (user_id,))
+        c.execute("DELETE FROM saved_searches WHERE user_id = ?", (user_id,))
+        c.execute("DELETE FROM users WHERE id = ?", (user_id,))
+        
+        conn.commit()
+        logger.info(f"Deleted user {user_id} and all associated data.")
+        return True
+    except sqlite3.Error as e:
+        logger.exception(f"Error deleting user {user_id}: {e}")
+        return False
+    finally:
+        conn.close()
+
 def get_users(db_path=DEFAULT_DB_PATH):
     conn = get_connection(db_path)
     conn.row_factory = sqlite3.Row
