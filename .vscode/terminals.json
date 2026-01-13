@@ -1,0 +1,17 @@
+{
+    "autorun": true,
+    "terminals": [
+        {
+            "name": "App",
+            "commands": [
+                "streamlit run app.py"
+            ]
+        },
+        {
+            "name": "Gemini",
+            "commands": [
+                "gemini"
+            ]
+        }
+    ]
+}
