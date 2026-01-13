@@ -17,6 +17,9 @@ def reset_filters_to_defaults():
 
 def render_sidebar(projects):
     st.sidebar.header("User Profile")
+
+    def on_user_change():
+        reset_filters_to_defaults()
     
     # --- 0. User Profile Management ---
     users = get_users() 
