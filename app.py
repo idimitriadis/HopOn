@@ -1,10 +1,17 @@
 import streamlit as st
 import pandas as pd
+from utils.logger import setup_logger, logger
+
+# --- Logger Initialization ---
+# This must be the very first action to ensure all errors are captured.
+if 'logger_configured' not in st.session_state:
+    setup_logger()
+    st.session_state['logger_configured'] = True
+
 from utils.data_loader import load_projects, load_orgs
 from utils.db import get_watchlist
 from components.sidebar import render_sidebar
 from components.project_list import render_project_list
-from utils.logger import logger
 
 st.set_page_config(page_title="HopOn Projects", layout="wide")
 logger.info("Application started/reloaded.")
