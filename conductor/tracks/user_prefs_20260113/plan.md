@@ -5,7 +5,7 @@
 - [x] Task: Extract data loading logic to `utils/data_loader.py`. a2bafdc
     - [ ] Sub-task: Write Tests for data loader.
     - [ ] Sub-task: Implement `load_projects` and `load_orgs` in new module.
-- [ ] Task: Extract Sidebar/Filter logic to `components/sidebar.py`.
+- [x] Task: Extract Sidebar/Filter logic to `components/sidebar.py`. e7579c2
     - [ ] Sub-task: Implement `render_sidebar` function that returns filter values.
 - [ ] Task: Extract Project List logic to `components/project_list.py`.
     - [ ] Sub-task: Implement `render_project_list` taking dataframe as input.
