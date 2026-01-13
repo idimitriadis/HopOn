@@ -12,6 +12,8 @@ from utils.data_loader import load_projects, load_orgs
 from utils.db import get_watchlist
 from components.sidebar import render_sidebar
 from components.project_list import render_project_list
+from components.metrics import render_metrics
+from components.charts import render_charts, render_coordinator_stats, render_project_timeline, render_choropleth_map
 
 st.set_page_config(page_title="HopOn Projects", layout="wide")
 logger.info("Application started/reloaded.")
@@ -57,7 +59,7 @@ if not projects.empty and filters:
         filtered_df = filtered_df[filtered_df['endDate'] <= pd.to_datetime(filters['end_date'])]
 
     # Always apply this mandatory filter
-    filtered_df = filtered_df[filtered_df['endDate'] > pd.to_datetime("2027-09-25")]
+    # filtered_df = filtered_df[filtered_df['endDate'] > pd.to_datetime("2027-09-25")]
 
     # Cluster and Funding Scheme filters
     if filters['selected_clusters']:
@@ -81,6 +83,15 @@ if not projects.empty and filters:
 else:
     filtered_df = projects
 
+# --- Dashboard Metrics ---
+render_metrics(filtered_df, df_organizations)
+
+# --- Visualizations ---
+with st.expander("📊 Dashboard Analytics", expanded=False):
+    render_project_timeline(filtered_df)
+    render_charts(filtered_df)
+    render_coordinator_stats(filtered_df, df_organizations)
+    render_choropleth_map(filtered_df, df_organizations)
 
 # Create tabs
 tab1, tab2 = st.tabs(["Projects", "Organisations"])

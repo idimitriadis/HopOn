@@ -16,10 +16,10 @@ def setup_logger():
             print(f"Error creating log directory: {e}", file=sys.stderr)
 
     # Add console handler (stderr) with color
-    logger.add(
-        sys.stderr, 
-        format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>"
-    )
+    # logger.add(
+    #     sys.stderr, 
+    #     format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>"
+    # )
 
     # Add file handler, wiping the file on each new session (mode="w")
     log_file_path = os.path.join(log_dir, "hopon.log")

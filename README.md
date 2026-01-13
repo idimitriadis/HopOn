@@ -46,10 +46,15 @@ For more details, see:
 
 ### Running the Dashboard
 
-To start the web interface, run:
+To start the web interface with integrated logging:
 
 ```bash
-streamlit run app.py
+python run.py
 ```
 
-The application will open in your default browser.
+This launcher will:
+1. Start the Streamlit server in the background.
+2. Stream logs directly to your terminal.
+3. Handle safe shutdown (Ctrl+C).
+
+The application will open in your default browser automatically.

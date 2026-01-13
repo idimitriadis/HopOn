@@ -1,10 +1,28 @@
 import streamlit as st
 import pandas as pd
 from utils.db import get_watchlist, add_to_watchlist, remove_from_watchlist
+from utils.export import convert_df_to_csv, convert_df_to_excel
 
 def render_project_list(filtered_df, user_id):
-    st.write("### Filtered Data")
+    col_header, col_export = st.columns([0.7, 0.3])
     
+    with col_header:
+        st.write("### Filtered Data")
+    
+    with col_export:
+        if not filtered_df.empty:
+            csv = convert_df_to_csv(filtered_df)
+            st.download_button(
+                label="📥 CSV",
+                data=csv,
+                file_name='projects_export.csv',
+                mime='text/csv',
+                key='download-csv'
+            )
+            # Excel button (optional, can be heavy for large files but fine here)
+            # excel_data = convert_df_to_excel(filtered_df)
+            # st.download_button(label="📥 Excel", data=excel_data, file_name='projects.xlsx', mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
     if filtered_df.empty:
         st.write("No projects match the criteria.")
         return None
@@ -18,6 +36,11 @@ def render_project_list(filtered_df, user_id):
     # Add 'Favorite' column
     df_display = filtered_df.copy()
     df_display.insert(0, 'Favorite', df_display['id'].isin(watchlist))
+
+    # Construct clickable DOI links
+    if 'grantDoi' in df_display.columns:
+        # Prepend base URL to DOI, handling NaNs
+        df_display['grantDoi'] = df_display['grantDoi'].apply(lambda x: f"https://doi.org/{x}" if pd.notnull(x) and str(x).strip() != '' else None)
 
     # Display editor
     # We disable editing if no user is selected
@@ -34,6 +57,15 @@ def render_project_list(filtered_df, user_id):
                 help="Select your favorite projects (Login required)",
                 default=False,
                 disabled=(user_id is None)
+            ),
+            "grantDoi": st.column_config.LinkColumn(
+                "DOI Link",
+                help="Click to open project on CORDIS/DOI",
+                display_text="Open Link"
+            ),
+            "totalCost": st.column_config.NumberColumn(
+                "Total Cost (€)",
+                format="€%.2f"
             )
         },
         disabled=disabled_cols,
