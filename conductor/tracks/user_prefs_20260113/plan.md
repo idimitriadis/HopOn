@@ -23,9 +23,9 @@
 - [x] Task: Integrate Watchlist UI in `components/project_list.py`. 3d1890d
     - [ ] Sub-task: Add "Star" column/button to the dataframe display or custom card layout.
     - [ ] Sub-task: Connect button click to `utils/db.py` functions.
-- [ ] Task: Add "Watchlist" Filter.
-    - [ ] Sub-task: Update `components/sidebar.py` to include a "Show Favorites Only" toggle.
-    - [ ] Sub-task: Update filter logic to intersect with `get_watchlist()` IDs.
+- [x] Task: Add "Watchlist" Filter. 82aaa5c
+    - [x] Sub-task: Update `components/sidebar.py` to include a "Show Favorites Only" toggle.
+    - [x] Sub-task: Update filter logic to intersect with `get_watchlist()` IDs.
 
 ## Phase 4: Saved Search Implementation
 - [ ] Task: Add "Save Search" UI to Sidebar.
