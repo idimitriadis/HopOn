@@ -12,7 +12,7 @@
 - [x] Task: Update `app.py` to use the new modules. 20ecb50
     - [ ] Sub-task: Verify application functionality matches original.
 
-## Phase 2: SQLite Backend Setup
+## Phase 2: SQLite Backend Setup [checkpoint: 8d5f9fb]
 - [x] Task: Create `utils/db.py` for database interactions. d6253d0
     - [x] Sub-task: Write Tests for DB connection and schema creation.
     - [x] Sub-task: Implement `init_db` to create `watchlist` and `saved_searches` tables.
