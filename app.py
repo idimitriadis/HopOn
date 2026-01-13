@@ -1,27 +1,10 @@
 import streamlit as st
 import pandas as pd
-import os
+from utils.data_loader import load_projects, load_orgs
+from components.sidebar import render_sidebar
+from components.project_list import render_project_list
 
 st.set_page_config(page_title="HopOn Projects", layout="wide")
-
-
-@st.cache_data
-def load_projects():
-    projects = pd.read_csv('data/processed/projects.csv', delimiter='|')
-    projects['startDate'] = pd.to_datetime(projects['startDate'], errors='coerce')
-    projects['endDate'] = pd.to_datetime(projects['endDate'], errors='coerce')
-    projects['id'] = projects['id'].astype('str')
-    projects = projects[['id','acronym','title','objective','cluster','topics','fundingScheme','startDate','endDate','legalBasis','grantDoi']]
-    return projects
-
-
-@st.cache_data
-def load_orgs():
-    orgs = pd.read_csv('data/processed/orgs.csv', delimiter='|')
-    orgs['projectID'] = orgs['projectID'].astype('str')
-    orgs = orgs[['name','activityType','city','country','role','organizationURL','projectID','order','ecContribution','contactForm']]
-    return orgs
-
 
 # Dictionary mapping country codes to country names
 country_mapping = {
@@ -44,69 +27,50 @@ projects = load_projects()
 df_organizations = load_orgs()
 
 # Filter organizations to keep only those in Europe
-df_organizations = df_organizations[df_organizations['country'].isin(country_mapping.keys())]
+if not df_organizations.empty:
+    df_organizations = df_organizations[df_organizations['country'].isin(country_mapping.keys())]
+    # Replace country codes with country names
+    df_organizations['country'] = df_organizations['country'].map(country_mapping)
 
-# Replace country codes with country names
-df_organizations['country'] = df_organizations['country'].map(country_mapping)
+# Render Sidebar and get filters
+filters = render_sidebar(projects)
+
+# Apply filters
+if not projects.empty and filters:
+    filtered_df = projects[
+        (projects['startDate'] >= pd.to_datetime(filters['start_date'])) &
+        (projects['endDate'] <= pd.to_datetime(filters['end_date'])) &
+        (projects['endDate'] > pd.to_datetime("2027-09-25"))  # Filter end date > 25th Sep 2027
+        ]
+    filtered_df = filtered_df[filtered_df['cluster'].isin(filters['selected_clusters'])]
+    filtered_df = filtered_df[filtered_df['fundingScheme'].isin(filters['selected_funding_schemes'])]
+
+    if filters['search_objective']:
+        filtered_df = filtered_df[filtered_df['objective'].str.contains(filters['search_objective'], case=False, na=False)]
+    if filters['search_id']:
+        filtered_df = filtered_df[filtered_df['id'].str.contains(filters['search_id'], case=False, na=False)]
+else:
+    filtered_df = projects
+
 
 # Create tabs
 tab1, tab2 = st.tabs(["Projects", "Organisations"])
 
 with tab1:
     st.header("Projects")
-    # Display Min and Max Dates
-    min_date = projects['startDate'].min()
-    max_date = projects['endDate'].max()
-    st.write(f"**Min Start Date:** {min_date}")
-    st.write(f"**Max End Date:** {max_date}")
+    
+    if not projects.empty:
+        min_date = projects['startDate'].min()
+        max_date = projects['endDate'].max()
+        st.write(f"**Min Start Date:** {min_date}")
+        st.write(f"**Max End Date:** {max_date}")
 
-    # --- Filters ---
-    st.sidebar.header("Project Filters")
+    selected_project = render_project_list(filtered_df)
 
-    min_end_date = max(projects['endDate'].min(), pd.to_datetime("2027-09-25"))
-
-    # Date range filter
-    start_date = st.sidebar.date_input("Start Date", min_value=min_date, max_value=max_date, value=min_date)
-    end_date = st.sidebar.date_input("End Date", min_value=min_end_date, max_value=max_date, value=max_date)
-
-    # Cluster filter
-    clusters = projects['cluster'].unique().tolist()
-    selected_clusters = st.sidebar.multiselect("Select Clusters", options=clusters, default=clusters)
-
-    # Funding scheme filter
-    funding_schemes = projects['fundingScheme'].unique().tolist()
-    selected_funding_schemes = st.sidebar.multiselect("Select Funding Schemes", options=funding_schemes,
-                                                      default=funding_schemes)
-    search_project_id = st.sidebar.text_input("Project ID")
-    # Objective Keyword search
-    search_objective = st.sidebar.text_input("Search Objective")
-
-    # Apply filters
-    filtered_df = projects[
-        (projects['startDate'] >= pd.to_datetime(start_date)) &
-        (projects['endDate'] <= pd.to_datetime(end_date)) &
-        (projects['endDate'] > pd.to_datetime("2027-09-25"))  # Filter end date > 25th Sep 2027
-        ]
-    filtered_df = filtered_df[filtered_df['cluster'].isin(selected_clusters)]
-    filtered_df = filtered_df[filtered_df['fundingScheme'].isin(selected_funding_schemes)]
-
-    if search_objective:
-        filtered_df = filtered_df[filtered_df['objective'].str.contains(search_objective, case=False, na=False)]
-    if search_project_id:
-        filtered_df = filtered_df[filtered_df['id'].str.contains(search_project_id, case=False, na=False)]
-
-
-    # Display filtered dataframe
-    st.write("### Filtered Data")
-    st.dataframe(filtered_df,hide_index=True)
-
-    # Select project
-    selected_project = st.selectbox("Select a Project ID to View Organizations", filtered_df['id'].unique())
-    st.write('Results: ' + str(filtered_df.shape[0]))
-    if search_project_id:
+    # Detail View
+    if filters and filters.get('search_id'):
         def format_row(row,df):
             return "\n\n".join(f"**{col}:** {row[col]}" for col in df.columns)
-
 
         # Convert entire DataFrame to formatted Markdown with line breaks
         formatted_text = "\n\n---\n\n".join(format_row(row,filtered_df) for _, row in filtered_df.iterrows())
@@ -115,7 +79,8 @@ with tab1:
         st.subheader("Info for specific project")
         st.markdown(formatted_text)
 
-    if df_organizations is not None:
+    # Org view for selected project
+    if not df_organizations.empty and selected_project:
         st.write("### Participating Organizations")
         project_orgs = df_organizations[df_organizations['projectID'] == selected_project]
         project_orgs = project_orgs.sort_values(by=['order'],ascending=True)
@@ -123,26 +88,27 @@ with tab1:
 
 with tab2:
     st.header("Organisations")
+    
+    if not df_organizations.empty:
+        # Organisation-specific filters
+        org_countries = df_organizations['country'].unique().tolist()
+        selected_countries = st.multiselect("Select Countries", options=org_countries, default=org_countries)
 
-    # Organisation-specific filters
-    org_countries = df_organizations['country'].unique().tolist()
-    selected_countries = st.multiselect("Select Countries", options=org_countries, default=org_countries)
+        org_types = df_organizations['activityType'].unique().tolist()
+        selected_types = st.multiselect("Select Organisation Types", options=org_types, default=org_types)
+        org_roles = df_organizations['role'].unique().tolist()
+        selected_roles = st.multiselect("Select Organisation Role",options=org_roles,default='coordinator')
+        # Organization name search
+        search_org_name = st.text_input("Search Organisation Name")
 
-    org_types = df_organizations['activityType'].unique().tolist()
-    selected_types = st.multiselect("Select Organisation Types", options=org_types, default=org_types)
-    org_roles = df_organizations['role'].unique().tolist()
-    selected_roles = st.multiselect("Select Organisation Role",options=org_roles,default='coordinator')
-    # Organization name search
-    search_org_name = st.text_input("Search Organisation Name")
+        # Apply filters
+        filtered_orgs = df_organizations[df_organizations['country'].isin(selected_countries)]
+        filtered_orgs = filtered_orgs[filtered_orgs['activityType'].isin(selected_types)]
+        filtered_orgs  = filtered_orgs[filtered_orgs['role'].isin(selected_roles)]
 
-    # Apply filters
-    filtered_orgs = df_organizations[df_organizations['country'].isin(selected_countries)]
-    filtered_orgs = filtered_orgs[filtered_orgs['activityType'].isin(selected_types)]
-    filtered_orgs  = filtered_orgs[filtered_orgs['role'].isin(selected_roles)]
+        if search_org_name:
+            filtered_orgs = filtered_orgs[filtered_orgs['name'].str.contains(search_org_name, case=False, na=False)]
 
-    if search_org_name:
-        filtered_orgs = filtered_orgs[filtered_orgs['name'].str.contains(search_org_name, case=False, na=False)]
-
-    # Display filtered organisations
-    st.write("### Filtered Organisations")
-    st.dataframe(filtered_orgs)
+        # Display filtered organisations
+        st.write("### Filtered Organisations")
+        st.dataframe(filtered_orgs)
