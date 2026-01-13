@@ -50,7 +50,8 @@ def render_project_list(filtered_df):
         for pid in removed_fav_ids:
             remove_from_watchlist(pid)
             
-        # Optional: Rerun to refresh UI state if needed, but Streamlit handles this usually on next interaction.
+        # Force rerun to update UI immediately
+        st.rerun()
     
     # Select project
     selected_project = st.selectbox("Select a Project ID to View Organizations", filtered_df['id'].unique())
