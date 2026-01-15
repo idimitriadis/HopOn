@@ -73,3 +73,42 @@ class ProjectMatcher:
         result_df = result_df.sort_values('relevance_score', ascending=False)
         
         return result_df
+
+    def get_similar_projects(self, project_id, df, top_k=5):
+        """
+        Finds projects similar to the given project_id based on embeddings.
+        """
+        if self.model is None or self.embeddings is None:
+            return pd.DataFrame()
+
+        # Find index of the project
+        try:
+            # We need the integer index in the embeddings tensor
+            idx = self.project_ids.index(project_id)
+        except ValueError:
+            logger.warning(f"Project ID {project_id} not found in embeddings.")
+            return pd.DataFrame()
+
+        # Get embedding for this project
+        target_embedding = self.embeddings[idx]
+
+        # Compute cosine similarity against ALL projects
+        scores = util.cos_sim(target_embedding, self.embeddings)[0]
+        
+        # Convert to list
+        scores_list = scores.cpu().numpy().tolist()
+        
+        # Map to IDs
+        score_map = dict(zip(self.project_ids, scores_list))
+        
+        # Create result DF
+        result_df = df.copy()
+        result_df['similarity_score'] = result_df['id'].map(score_map).fillna(0)
+        
+        # Sort desc
+        result_df = result_df.sort_values('similarity_score', ascending=False)
+        
+        # Filter out the project itself (similarity is 1.0)
+        result_df = result_df[result_df['id'] != project_id]
+        
+        return result_df.head(top_k)

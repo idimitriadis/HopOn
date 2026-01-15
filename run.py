@@ -6,7 +6,7 @@ from loguru import logger
 
 # Configuration
 LOG_FILE = "logs/hopon.log"
-APP_COMMAND = ["streamlit", "run", "app.py"]
+APP_COMMAND = [sys.executable, "-m", "streamlit", "run", "app.py"]
 
 def follow(file):
     """Generator that yields new lines from a file."""
@@ -23,7 +23,7 @@ def main():
     os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
     
     # Start Streamlit in the background
-    print(f"🚀 Launching HopOn: {' '.join(APP_COMMAND)}")
+    print(f"[INFO] Launching HopOn: {' '.join(APP_COMMAND)}")
     process = subprocess.Popen(APP_COMMAND)
 
     try:
@@ -32,19 +32,19 @@ def main():
         
         # Check if log file exists and has content
         if not os.path.exists(LOG_FILE):
-            print(f"⚠️  Warning: {LOG_FILE} not found. Creating empty file...")
+            print(f"[WARN] {LOG_FILE} not found. Creating empty file...")
             with open(LOG_FILE, 'w') as f:
                 f.write("")
-            print("❌ No logs detected! Make sure app.py has logging configured:")
+            print("[ERR] No logs detected! Make sure app.py has logging configured:")
             print("   logger.add('logs/hopon.log', ...)")
         else:
             file_size = os.path.getsize(LOG_FILE)
             if file_size == 0:
-                print(f"⚠️  Warning: {LOG_FILE} is empty. App may not be logging yet...")
+                print(f"[WARN] {LOG_FILE} is empty. App may not be logging yet...")
             else:
-                print(f"✅ Log file detected ({file_size} bytes)")
+                print(f"[OK] Log file detected ({file_size} bytes)")
 
-        print(f"👀 Watching logs: {LOG_FILE}\n" + "-"*40)
+        print(f"[INFO] Watching logs: {LOG_FILE}\n" + "-"*40)
         
         with open(LOG_FILE, "r") as logfile:
             # Follow new lines
@@ -57,7 +57,7 @@ def main():
                     break
 
     except KeyboardInterrupt:
-        print("\n🛑 Stopping HopOn...")
+        print("\n[STOP] Stopping HopOn...")
         
         # Log shutdown BEFORE killing the process
         logger.remove()
@@ -69,11 +69,11 @@ def main():
             process.terminate()
             process.wait(timeout=5)
         except subprocess.TimeoutExpired:
-            print("⚠️  Process didn't stop gracefully, forcing kill...")
+            print("[WARN] Process didn't stop gracefully, forcing kill...")
             process.kill()
             process.wait()
         
-        print("✅ HopOn stopped")
+        print("[OK] HopOn stopped")
         sys.exit(0)
 
 if __name__ == "__main__":

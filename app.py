@@ -1,6 +1,10 @@
 import streamlit as st
 import pandas as pd
+from dotenv import load_dotenv
 from utils.logger import setup_logger, logger
+
+# --- Load Environment Variables ---
+load_dotenv()
 
 # --- Logger Initialization ---
 # This must be the very first action to ensure all errors are captured.
@@ -121,6 +125,36 @@ with tab1:
         st.write(f"**Max End Date:** {max_date}")
 
     selected_project = render_project_list(filtered_df, user_id)
+
+    # --- AI Project Brief ---
+    if selected_project:
+        st.markdown("---")
+        st.subheader(f"Project Details: {selected_project}")
+        
+        # Check session state for cached brief
+        brief_key = f"brief_{selected_project}"
+        
+        col_gen, _ = st.columns([0.3, 0.7])
+        with col_gen:
+             if st.button("✨ Generate AI One-Pager", key="btn_gen_brief"):
+                # Get project data
+                project_row = projects[projects['id'] == selected_project]
+                if not project_row.empty:
+                    project_data = project_row.iloc[0].to_dict()
+                    with st.spinner("Generating One-Pager with Gemini 3.0 Flash..."):
+                        from utils.ai import generate_project_brief
+                        brief = generate_project_brief(project_data)
+                        if brief:
+                            st.session_state[brief_key] = brief
+                            st.rerun() # Rerun to display the result cleanly
+                        else:
+                            st.error("Generation failed. Please check your API key.")
+        
+        if brief_key in st.session_state:
+            st.markdown(st.session_state[brief_key])
+            if st.button("Clear Brief", key="btn_clear_brief"):
+                del st.session_state[brief_key]
+                st.rerun()
 
     # Detail View
     if filters and filters.get('search_id'):

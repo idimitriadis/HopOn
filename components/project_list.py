@@ -106,5 +106,28 @@ def render_project_list(filtered_df, user_id):
     # Select project
     selected_project = st.selectbox("Select a Project ID to View Organizations", filtered_df['id'].unique())
     st.write('Results: ' + str(filtered_df.shape[0]))
+
+    # --- Similar Projects Recommender ---
+    if selected_project and 'project_matcher' in st.session_state:
+        matcher = st.session_state['project_matcher']
+        # Only try if embeddings are ready
+        if matcher.embeddings is not None:
+            st.markdown("---")
+            st.subheader("💡 Similar Projects")
+            
+            similar_df = matcher.get_similar_projects(selected_project, filtered_df, top_k=3)
+            
+            if not similar_df.empty:
+                cols = st.columns(3)
+                for idx, (col, row) in enumerate(zip(cols, similar_df.iterrows())):
+                    _, project = row
+                    with col:
+                        score = int(project['similarity_score'] * 100)
+                        st.metric(label=f"Match: {score}%", value=project['id'])
+                        st.caption(f"**{project['title']}**")
+                        with st.expander("Brief"):
+                            st.write(project['objective'][:200] + "...")
+            else:
+                st.caption("No similar projects found (try generating embeddings first).")
     
     return selected_project
