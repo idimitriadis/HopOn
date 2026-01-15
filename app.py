@@ -7,7 +7,7 @@ st.set_page_config(page_title="HopOn Projects", layout="wide")
 
 @st.cache_data
 def load_projects():
-    projects = pd.read_csv('projects_old.csv', delimiter='|')
+    projects = pd.read_csv('projects.csv', delimiter='|')
     projects['startDate'] = pd.to_datetime(projects['startDate'], errors='coerce')
     projects['endDate'] = pd.to_datetime(projects['endDate'], errors='coerce')
     projects['id'] = projects['id'].astype('str')
@@ -17,7 +17,7 @@ def load_projects():
 
 @st.cache_data
 def load_orgs():
-    orgs = pd.read_csv('orgs_old.csv', delimiter='|')
+    orgs = pd.read_csv('orgs.csv', delimiter='|')
     orgs['projectID'] = orgs['projectID'].astype('str')
     orgs = orgs[['name','activityType','city','country','role','organizationURL','projectID','order','ecContribution','contactForm']]
     return orgs
