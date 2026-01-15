@@ -63,7 +63,7 @@ with tab1:
     # --- Filters ---
     st.sidebar.header("Project Filters")
 
-    min_end_date = max(projects['endDate'].min(), pd.to_datetime("2028-09-25"))
+    min_end_date = max(projects['endDate'].min(), pd.to_datetime("2027-09-25"))
 
     # Date range filter
     start_date = st.sidebar.date_input("Start Date", min_value=min_date, max_value=max_date, value=min_date)
@@ -85,7 +85,7 @@ with tab1:
     filtered_df = projects[
         (projects['startDate'] >= pd.to_datetime(start_date)) &
         (projects['endDate'] <= pd.to_datetime(end_date)) &
-        (projects['endDate'] > pd.to_datetime("2028-09-25"))  # Filter end date > 25th Sep 2027
+        (projects['endDate'] > pd.to_datetime("2027-09-25"))  # Filter end date > 25th Sep 2027
         ]
     filtered_df = filtered_df[filtered_df['cluster'].isin(selected_clusters)]
     filtered_df = filtered_df[filtered_df['fundingScheme'].isin(selected_funding_schemes)]
