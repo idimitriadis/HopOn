@@ -32,9 +32,23 @@ python scripts/manage_users.py add <username> <password>
 ```bash
 python scripts/manage_users.py add admin mysecurepassword
 ```
-*(The Name will default to the Username. You can edit profile details inside the app later if needed.)*
 
-### 3. Delete a User
+### 3. Edit a User
+To update a user's username or password:
+```bash
+python scripts/manage_users.py edit <current_username> [--new-username <name>] [--new-password <pass>]
+```
+
+**Examples:**
+```bash
+# Change Password
+python scripts/manage_users.py edit admin --new-password newsecret
+
+# Change Username
+python scripts/manage_users.py edit admin --new-username superadmin
+```
+
+### 4. Delete a User
 To delete a user and their data:
 ```bash
 python scripts/manage_users.py delete <username>

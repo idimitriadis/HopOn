@@ -112,6 +112,44 @@ def get_user_id(username):
         user = db.query(User).filter(User.username == username).first()
         return user.id if user else None
 
+def update_user(user_id, new_username=None, new_password=None):
+    """Updates user credentials."""
+    with get_db() as db:
+        try:
+            user = db.query(User).filter(User.id == user_id).first()
+            if not user:
+                return False
+            
+            if new_username:
+                user.username = new_username
+            
+            if new_password:
+                pwd_bytes = new_password.encode('utf-8')
+                salt = bcrypt.gensalt()
+                user.password_hash = bcrypt.hashpw(pwd_bytes, salt).decode('utf-8')
+            
+            db.commit()
+            logger.info(f"Updated user {user_id}")
+            return True
+        except Exception as e:
+            logger.error(f"Error updating user: {e}")
+            return False
+
+def delete_user(user_id):
+    """Deletes user and cascades via ORM relationships."""
+    with get_db() as db:
+        try:
+            user = db.query(User).filter(User.id == user_id).first()
+            if user:
+                db.delete(user) # Cascade deletes watchlist/searches defined in Model
+                db.commit()
+                logger.info(f"Deleted user {user_id}")
+                return True
+            return False
+        except Exception as e:
+            logger.error(f"Error deleting user: {e}")
+            return False
+
 # --- Watchlist ---
 def add_to_watchlist(project_id, user_id):
     with get_db() as db:
@@ -161,18 +199,3 @@ def delete_search(search_id):
             logger.info(f"Deleted search {search_id}")
         except Exception as e:
             logger.error(f"Error deleting search: {e}")
-
-def delete_user(user_id):
-    """Deletes user and cascades via ORM relationships."""
-    with get_db() as db:
-        try:
-            user = db.query(User).filter(User.id == user_id).first()
-            if user:
-                db.delete(user) # Cascade deletes watchlist/searches defined in Model
-                db.commit()
-                logger.info(f"Deleted user {user_id}")
-                return True
-            return False
-        except Exception as e:
-            logger.error(f"Error deleting user: {e}")
-            return False
