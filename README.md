@@ -20,6 +20,7 @@ For more details, see:
 * [**Tech Stack**](./readmes/tech_stack.md)
 * [**Data Pipeline**](./readmes/pipeline.md)
 * [**AI Engine & Intelligence**](./readmes/ai_engine.md) 🧠 (New!)
+* [**Performance & Optimization**](./readmes/performance.md) ⚡ (New!)
 
 ## How to Run
 

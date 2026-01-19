@@ -1,42 +1,102 @@
 import pandas as pd
 import numpy as np
+import os
+import pickle
 from sentence_transformers import SentenceTransformer, util
 from utils.logger import logger
 import streamlit as st
 
+# Global Constants
+EMBEDDINGS_FILE = "data/processed/embeddings.pkl"
+
+@st.cache_resource
+def load_model():
+    """
+    Loads the SentenceTransformer model. 
+    Cached globally to prevent reloading on every session.
+    """
+    try:
+        logger.info("Loading Semantic Model (all-MiniLM-L6-v2)...")
+        return SentenceTransformer('all-MiniLM-L6-v2')
+    except Exception as e:
+        logger.exception(f"Failed to load Semantic Model: {e}")
+        return None
+
 class ProjectMatcher:
     def __init__(self):
-        # Load model efficiently
-        # 'all-MiniLM-L6-v2' is fast and good for semantic search
-        try:
-            logger.info("Initializing Semantic Matcher (all-MiniLM-L6-v2)...")
-            self.model = SentenceTransformer('all-MiniLM-L6-v2')
-            self.embeddings = None
-            self.project_ids = None
-            logger.success("Semantic Matcher ready.")
-        except Exception as e:
-            logger.exception(f"Failed to load Semantic Model: {e}")
-            self.model = None
+        self.model = load_model()
+        self.embeddings = None
+        self.project_ids = None
 
     def encode_projects(self, df):
         """
-        Generates embeddings for the projects dataframe.
-        We combine 'title' + 'objective' + 'topics' for the fingerprint.
+        Generates or loads embeddings for the projects dataframe.
         """
         if self.model is None or df.empty:
             return
 
-        logger.info(f"Encoding {len(df)} projects...")
+        # 1. Try to load from disk first
+        if self._load_embeddings_from_disk(df):
+             return
+
+        # 2. If not found or stale, re-compute
+        logger.info(f"Computing embeddings for {len(df)} projects...")
         
-        # Create a rich text representation for embedding
-        # Title is heavily weighted (conceptually), Objective provides detail
         text_corpus = df.apply(lambda x: f"{x['title']} {x['objective']} {x['topics']}", axis=1).tolist()
         
-        # Compute embeddings (returns numpy array)
+        # Compute embeddings
         self.embeddings = self.model.encode(text_corpus, convert_to_tensor=True)
         self.project_ids = df['id'].tolist()
         
-        logger.success("Project encoding complete.")
+        # 3. Save to disk
+        self._save_embeddings_to_disk()
+        
+        logger.success("Project encoding complete (Computed & Saved).")
+
+    def _save_embeddings_to_disk(self):
+        """Saves embeddings and project IDs to a pickle file."""
+        try:
+            data = {
+                'ids': self.project_ids,
+                'embeddings': self.embeddings
+            }
+            # Ensure directory exists
+            os.makedirs(os.path.dirname(EMBEDDINGS_FILE), exist_ok=True)
+            with open(EMBEDDINGS_FILE, 'wb') as f:
+                pickle.dump(data, f)
+            logger.info(f"Embeddings saved to {EMBEDDINGS_FILE}")
+        except Exception as e:
+            logger.error(f"Failed to save embeddings: {e}")
+
+    def _load_embeddings_from_disk(self, current_df):
+        """
+        Loads embeddings from disk if they match the current dataset.
+        Returns True if successful, False otherwise.
+        """
+        if not os.path.exists(EMBEDDINGS_FILE):
+            return False
+        
+        try:
+            with open(EMBEDDINGS_FILE, 'rb') as f:
+                data = pickle.load(f)
+            
+            cached_ids = data.get('ids', [])
+            current_ids = current_df['id'].tolist()
+            
+            # Simple validation: Check if ID lists are identical
+            # (In production, a hash of the content would be safer, but this covers add/remove)
+            if cached_ids == current_ids:
+                self.project_ids = cached_ids
+                self.embeddings = data['embeddings']
+                logger.info("Loaded embeddings from disk (Cache Hit).")
+                return True
+            else:
+                logger.warning("Cached embeddings do not match current project list (Cache Miss).")
+                return False
+                
+        except Exception as e:
+            logger.error(f"Failed to load cached embeddings: {e}")
+            return False
 
     def search(self, query, df, top_k=None):
         """
@@ -57,10 +117,6 @@ class ProjectMatcher:
         # Convert to numpy and then to list
         scores_list = scores.cpu().numpy().tolist()
 
-        # Add scores to the dataframe (we need to align by ID or Index)
-        # Since we stored self.project_ids in order, and df hasn't changed order relative to our cache...
-        # Wait, if df is filtered externally, we need to map scores by ID.
-        
         score_map = dict(zip(self.project_ids, scores_list))
         
         # Create a copy to avoid SettingWithCopy warnings

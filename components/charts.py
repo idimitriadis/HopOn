@@ -3,12 +3,32 @@ import pandas as pd
 import altair as alt
 import plotly.express as px
 
+@st.cache_data
+def get_cluster_chart(projects_df):
+    if 'cluster' in projects_df.columns:
+        cluster_counts = projects_df['cluster'].value_counts().reset_index()
+        cluster_counts.columns = ['Cluster', 'Count']
+        
+        return alt.Chart(cluster_counts).mark_bar().encode(
+            x=alt.X('Count', title='Number of Projects', axis=alt.Axis(tickMinStep=1)),
+            y=alt.Y('Cluster', sort='-x', title=None),
+            tooltip=['Cluster', 'Count']
+        ).properties(height=300)
+    return None
+
+@st.cache_data
+def get_funding_chart_data(projects_df):
+    # Returns data for st.bar_chart (which doesn't return an object we can easily cache-and-render the same way)
+    if 'cluster' in projects_df.columns and 'totalCost' in projects_df.columns:
+        funding_data = projects_df.groupby('cluster')['totalCost'].sum().reset_index()
+        funding_data.columns = ['Cluster', 'TotalFunding']
+        funding_data['TotalFunding'] = funding_data['TotalFunding'].astype(float)
+        return funding_data.set_index('Cluster')['TotalFunding']
+    return None
+
 def render_charts(projects_df):
     """
     Renders interactive charts for the dashboard.
-    
-    Args:
-        projects_df (pd.DataFrame): The filtered projects DataFrame.
     """
     if projects_df.empty:
         return
@@ -19,41 +39,45 @@ def render_charts(projects_df):
     
     with col1:
         st.write("#### Projects by Cluster")
-        # Prepare data: Count projects per cluster
-        if 'cluster' in projects_df.columns:
-            cluster_counts = projects_df['cluster'].value_counts().reset_index()
-            cluster_counts.columns = ['Cluster', 'Count']
-            
-            # Altair Bar Chart
-            chart = alt.Chart(cluster_counts).mark_bar().encode(
-                x=alt.X('Count', title='Number of Projects', axis=alt.Axis(tickMinStep=1)),
-                y=alt.Y('Cluster', sort='-x', title=None),
-                tooltip=['Cluster', 'Count']
-            ).properties(height=300)
-            
+        chart = get_cluster_chart(projects_df)
+        if chart:
             st.altair_chart(chart, use_container_width=True)
         else:
             st.info("Cluster data not available.")
 
     with col2:
         st.write("#### Funding Distribution")
-        # Prepare data: Sum cost per cluster
-        if 'cluster' in projects_df.columns and 'totalCost' in projects_df.columns:
-            funding_data = projects_df.groupby('cluster')['totalCost'].sum().reset_index()
-            funding_data.columns = ['Cluster', 'TotalFunding']
-            
-            # Ensure TotalFunding is float
-            funding_data['TotalFunding'] = funding_data['TotalFunding'].astype(float)
-            
-            # STREAMLIT NATIVE CHART (Robust Fallback)
-            # st.bar_chart expects index to be the categories (Y-axis)
-            chart_data = funding_data.set_index('Cluster')['TotalFunding']
-            st.bar_chart(chart_data, color="#FFA500", horizontal=True) # Orange color
-                
+        chart_data = get_funding_chart_data(projects_df)
+        if chart_data is not None:
+            st.bar_chart(chart_data, color="#FFA500", horizontal=True)
         else:
             st.info("Funding data not available.")
             
     st.markdown("---")
+
+@st.cache_data
+def get_coordinator_chart(projects_df, orgs_df):
+    # Filter orgs to only those involved in the visible projects
+    relevant_orgs = orgs_df[orgs_df['projectID'].isin(projects_df['id'])]
+    
+    # Filter for Coordinators only
+    coordinators = relevant_orgs[relevant_orgs['role'].str.contains('coordinator', case=False, na=False)]
+    
+    if coordinators.empty:
+        return None
+
+    # Count projects per coordinator
+    coord_counts = coordinators['name'].value_counts().reset_index()
+    coord_counts.columns = ['Coordinator', 'Projects Managed']
+    
+    # Take Top 10
+    top_coords = coord_counts.head(10)
+    
+    return alt.Chart(top_coords).mark_bar().encode(
+        x=alt.X('Projects Managed', title='Projects', axis=alt.Axis(tickMinStep=1)),
+        y=alt.Y('Coordinator', sort='-x', title=None),
+        tooltip=['Coordinator', 'Projects Managed']
+    ).properties(height=300)
 
 def render_coordinator_stats(projects_df, orgs_df):
     """
@@ -64,49 +88,24 @@ def render_coordinator_stats(projects_df, orgs_df):
 
     st.subheader("🏆 Coordinator Leaderboard")
     
-    # Filter orgs to only those involved in the visible projects
-    relevant_orgs = orgs_df[orgs_df['projectID'].isin(projects_df['id'])]
+    chart = get_coordinator_chart(projects_df, orgs_df)
     
-    # Filter for Coordinators only
-    coordinators = relevant_orgs[relevant_orgs['role'].str.contains('coordinator', case=False, na=False)]
-    
-    if coordinators.empty:
+    if chart:
+        st.altair_chart(chart, use_container_width=True)
+    else:
         st.info("No coordinator data found.")
-        return
-
-    # Count projects per coordinator
-    coord_counts = coordinators['name'].value_counts().reset_index()
-    coord_counts.columns = ['Coordinator', 'Projects Managed']
-    
-    # Take Top 10
-    top_coords = coord_counts.head(10)
-    
-    # Altair Bar Chart (Full Width)
-    chart = alt.Chart(top_coords).mark_bar().encode(
-        x=alt.X('Projects Managed', title='Projects', axis=alt.Axis(tickMinStep=1)),
-        y=alt.Y('Coordinator', sort='-x', title=None),
-        tooltip=['Coordinator', 'Projects Managed']
-    ).properties(height=300)
-    st.altair_chart(chart, use_container_width=True)
-    
+        
     st.markdown("---")
 
-def render_project_timeline(projects_df):
-    """
-    Renders a Gantt chart of project timelines.
-    """
-    if projects_df.empty:
-        return
-
-    st.subheader("⏳ Project Timeline")
-    
+@st.cache_data
+def get_timeline_chart(projects_df):
     # Sort by Start Date
     timeline_df = projects_df.sort_values('startDate', ascending=False).head(30).copy()
     
     # Calculate duration
     timeline_df['duration_months'] = ((timeline_df['endDate'] - timeline_df['startDate']) / pd.Timedelta(days=30)).astype(int)
 
-    chart = alt.Chart(timeline_df).mark_bar().encode(
+    return alt.Chart(timeline_df).mark_bar().encode(
         x=alt.X('startDate', title='Timeline'),
         x2='endDate',
         y=alt.Y('acronym', sort='-x', title='Project'),
@@ -121,19 +120,21 @@ def render_project_timeline(projects_df):
         height=400
     ).interactive()
 
+def render_project_timeline(projects_df):
+    """
+    Renders a Gantt chart of project timelines.
+    """
+    if projects_df.empty:
+        return
+
+    st.subheader("⏳ Project Timeline")
+    chart = get_timeline_chart(projects_df)
     st.altair_chart(chart, use_container_width=True)
     st.caption("Displaying 30 most recent projects sorted by Start Date.")
     st.markdown("---")
 
-def render_choropleth_map(projects_df, orgs_df):
-    """
-    Renders a Choropleth map of funding using Plotly.
-    """
-    if projects_df.empty or orgs_df.empty:
-        return
-        
-    st.subheader("🌍 European Funding Landscape")
-
+@st.cache_data
+def get_choropleth_map(projects_df, orgs_df):
     # Filter orgs
     relevant_orgs = orgs_df[orgs_df['projectID'].isin(projects_df['id'])].copy()
     
@@ -144,8 +145,7 @@ def render_choropleth_map(projects_df, orgs_df):
     ).reset_index()
     
     if country_stats.empty:
-        st.warning("No geographic data available.")
-        return
+        return None
 
     # Create Plotly Choropleth
     fig = px.choropleth(
@@ -168,5 +168,20 @@ def render_choropleth_map(projects_df, orgs_df):
             projection_scale=1.2 # Zoom in slightly on Europe
         )
     )
+    return fig
 
-    st.plotly_chart(fig, use_container_width=True)
+def render_choropleth_map(projects_df, orgs_df):
+    """
+    Renders a Choropleth map of funding using Plotly.
+    """
+    if projects_df.empty or orgs_df.empty:
+        return
+        
+    st.subheader("🌍 European Funding Landscape")
+    
+    fig = get_choropleth_map(projects_df, orgs_df)
+    
+    if fig:
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.warning("No geographic data available.")
