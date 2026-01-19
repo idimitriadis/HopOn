@@ -21,6 +21,7 @@ For more details, see:
 * [**Data Pipeline**](./readmes/pipeline.md)
 * [**AI Engine & Intelligence**](./readmes/ai_engine.md) 🧠 (New!)
 * [**Performance & Optimization**](./readmes/performance.md) ⚡ (New!)
+* [**Security Architecture**](./readmes/security.md) 🛡️ (New!)
 
 ## How to Run
 
