@@ -1,52 +1,83 @@
 import unittest
-import sqlite3
+from unittest.mock import patch
 import os
-from utils.db import init_db, add_to_watchlist, remove_from_watchlist, get_watchlist, save_search, get_saved_searches, delete_search
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from utils.models import Base
+# Import the functions we want to test
+# Note: We will patch the internal get_db logic via context manager
+import utils.db 
 
 class TestDB(unittest.TestCase):
 
     def setUp(self):
-        # Use file DB for testing to persist across calls
-        self.db_path = 'test_user_prefs.db'
-        if os.path.exists(self.db_path):
-            os.remove(self.db_path)
-        init_db(self.db_path)
+        # Create an in-memory engine
+        self.engine = create_engine("sqlite:///:memory:")
+        # Create all tables
+        Base.metadata.create_all(self.engine)
+        # Create a session factory
+        self.TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
+
+        # Patch the SessionLocal in utils.db to use our in-memory engine
+        self.patcher = patch('utils.db.SessionLocal', self.TestingSessionLocal)
+        self.patcher.start()
 
     def tearDown(self):
-        if os.path.exists(self.db_path):
-            os.remove(self.db_path)
+        self.patcher.stop()
+        Base.metadata.drop_all(self.engine)
+
+    def test_user_creation_and_auth(self):
+        # Test Create
+        uid = utils.db.create_user("testuser", "password123", "Test Name", "test@example.com")
+        self.assertIsNotNone(uid)
+
+        # Test Verify Success
+        self.assertTrue(utils.db.verify_user("testuser", "password123"))
+        
+        # Test Verify Fail
+        self.assertFalse(utils.db.verify_user("testuser", "wrongpassword"))
+
+        # Test Get Config
+        config = utils.db.get_all_users_config()
+        self.assertIn("testuser", config)
+        self.assertEqual(config["testuser"]["email"], "test@example.com")
 
     def test_watchlist_flow(self):
+        # Create User first
+        uid = utils.db.create_user("watcher", "pass")
+        
         # Test Add
-        add_to_watchlist('proj_1', self.db_path)
-        watchlist = get_watchlist(self.db_path)
+        utils.db.add_to_watchlist('proj_1', uid)
+        watchlist = utils.db.get_watchlist(uid)
         self.assertIn('proj_1', watchlist)
         
-        # Test Duplicate Add (should ignore)
-        add_to_watchlist('proj_1', self.db_path)
-        watchlist = get_watchlist(self.db_path)
+        # Test Duplicate Add (should not crash/duplicate)
+        utils.db.add_to_watchlist('proj_1', uid)
+        watchlist = utils.db.get_watchlist(uid)
         self.assertEqual(len(watchlist), 1)
 
         # Test Remove
-        remove_from_watchlist('proj_1', self.db_path)
-        watchlist = get_watchlist(self.db_path)
+        utils.db.remove_from_watchlist('proj_1', uid)
+        watchlist = utils.db.get_watchlist(uid)
         self.assertNotIn('proj_1', watchlist)
 
     def test_saved_search_flow(self):
+        uid = utils.db.create_user("searcher", "pass")
+        
         # Test Save
         filters = '{"cluster": "Health"}'
-        save_search('My Search', filters, self.db_path)
+        utils.db.save_search('My Search', filters, uid)
         
-        searches = get_saved_searches(self.db_path)
+        searches = utils.db.get_saved_searches(uid)
         self.assertEqual(len(searches), 1)
         self.assertEqual(searches[0]['name'], 'My Search')
         self.assertEqual(searches[0]['filters'], filters)
         
         # Test Delete
         search_id = searches[0]['id']
-        delete_search(search_id, self.db_path)
+        utils.db.delete_search(search_id)
         
-        searches = get_saved_searches(self.db_path)
+        searches = utils.db.get_saved_searches(uid)
         self.assertEqual(len(searches), 0)
 
 if __name__ == '__main__':
