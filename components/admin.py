@@ -22,8 +22,6 @@ def render_admin_panel(current_user_id):
             data = [{
                 'ID': u.id, 
                 'Username': u.username, 
-                'Name': u.name, 
-                'Email': u.email,
                 'Created At': u.created_at
             } for u in users]
         
@@ -31,7 +29,7 @@ def render_admin_panel(current_user_id):
             st.dataframe(data, use_container_width=True, hide_index=True)
             
             st.subheader("Remove Access")
-            user_to_delete = st.selectbox("Select User to Delete", options=users, format_func=lambda x: f"{x.username} ({x.name})")
+            user_to_delete = st.selectbox("Select User to Delete", options=users, format_func=lambda x: x.username)
             
             if user_to_delete:
                 # Prevent self-deletion if you want, though valid for testing
@@ -51,8 +49,6 @@ def render_admin_panel(current_user_id):
         with st.form("create_user_form"):
             new_username = st.text_input("Username*")
             new_password = st.text_input("Password*", type="password")
-            new_name = st.text_input("Full Name")
-            # Email optional
             
             submitted = st.form_submit_button("Create User")
             
@@ -60,7 +56,8 @@ def render_admin_panel(current_user_id):
                 if new_username and new_password:
                     # Check if exists (basic check)
                     # create_user handles the hashing and DB insertion
-                    uid = create_user(new_username, new_password, new_name)
+                    # Name defaults to Username, Email is None
+                    uid = create_user(new_username, new_password, name=new_username, email=None)
                     
                     if uid:
                         st.success(f"User '{new_username}' created successfully!")
