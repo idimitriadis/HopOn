@@ -56,6 +56,7 @@ from components.sidebar import render_sidebar
 from components.project_list import render_project_list
 from components.metrics import render_metrics
 from components.charts import render_charts, render_coordinator_stats, render_project_timeline, render_choropleth_map
+from components.admin import render_admin_panel
 
 logger.info("Application started/reloaded.")
 
@@ -98,6 +99,13 @@ if not df_organizations.empty:
 # Render Sidebar and get filters
 # We pass the authenticated user_id to the sidebar
 filters = render_sidebar(projects, current_user_id) 
+
+# --- ROUTING LOGIC ---
+if filters.get('page') == "User Management":
+    render_admin_panel(current_user_id)
+    st.stop() # Stop rendering the dashboard
+
+# --- DASHBOARD LOGIC ---
 
 # Apply filters
 if not projects.empty and filters:

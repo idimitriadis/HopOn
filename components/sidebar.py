@@ -38,9 +38,13 @@ def render_sidebar(projects, current_user_id):
         # Clean up the temporary key to prevent re-applying on the next rerun
         del st.session_state.search_to_load
 
+    # --- Navigation ---
+    page = st.sidebar.radio("Go to", ["Dashboard", "User Management"], index=0)
+    st.sidebar.markdown("---")
+
     st.sidebar.header("Project Filters")
 
-    if projects.empty: return {}
+    if projects.empty: return {'page': page} # Return page even if no projects
     if 'filter_clusters' not in st.session_state: reset_filters_to_defaults()
     
     # --- Render Filter Widgets ---
@@ -97,5 +101,6 @@ def render_sidebar(projects, current_user_id):
     return {
         'show_watchlist': show_watchlist, 'start_date': start_date, 'end_date': end_date,
         'selected_clusters': selected_clusters, 'selected_funding_schemes': selected_funding_schemes,
-        'search_id': search_project_id, 'search_objective': search_objective, 'user_id': current_user_id
+        'search_id': search_project_id, 'search_objective': search_objective, 'user_id': current_user_id,
+        'page': page
     }

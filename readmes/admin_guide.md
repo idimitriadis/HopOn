@@ -9,13 +9,16 @@ All user management is performed using the `scripts/manage_users.py` script. Thi
 **Prerequisite:** Ensure your virtual environment is activated.
 
 ### 1. List Users
+
 To see all registered users:
+
 ```bash
 python scripts/manage_users.py list
 ```
 
 **Output:**
-```
+
+```table
 ID    Username             Name                 Email
 ---------------------------------------------------------------------------
 1     admin                Admin User           admin@example.com
@@ -23,12 +26,15 @@ ID    Username             Name                 Email
 ```
 
 ### 2. Add a User
+
 To create a new user:
+
 ```bash
 python scripts/manage_users.py add <username> <password> [--name "Full Name"] [--email "email@addr.com"]
 ```
 
 **Examples:**
+
 ```bash
 # Minimal
 python scripts/manage_users.py add john secret123
@@ -38,10 +44,12 @@ python scripts/manage_users.py add maria securepass! --name "Maria Garcia" --ema
 ```
 
 ### 3. Delete a User
+
 (Currently manual deletion via database or python shell is required if not exposed in the script, see Phase 3).
 **Note:** Deleting a user will also delete their Watchlist and Saved Searches.
 
 ## Database Migrations
+
 If you modify the database schema (models), you must run migrations:
 
 ```bash
