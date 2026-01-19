@@ -26,8 +26,11 @@ if config.config_file_name is not None:
 target_metadata = Base.metadata
 
 # Set database URL dynamically
-# Default to SQLite if DATABASE_URL is not set
-db_url = os.getenv("DATABASE_URL", "sqlite:///data/db/user_prefs.db")
+db_url = os.getenv("DATABASE_URL")
+if not db_url:
+    # Allow local dev/test if specifically intended, but generally enforce Env Var now
+    raise ValueError("DATABASE_URL environment variable is required for migrations.")
+
 config.set_main_option("sqlalchemy.url", db_url)
 
 def run_migrations_offline() -> None:
@@ -54,8 +57,8 @@ def run_migrations_online() -> None:
     with connectable.connect() as connection:
         context.configure(
             connection=connection, 
-            target_metadata=target_metadata,
-            render_as_batch=True # Required for SQLite migrations (ALTER TABLE support)
+            target_metadata=target_metadata
+            # render_as_batch=True is removed for PostgreSQL support
         )
 
         with context.begin_transaction():

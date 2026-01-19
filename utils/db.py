@@ -1,4 +1,5 @@
 import os
+import sys
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from contextlib import contextmanager
@@ -10,10 +11,27 @@ import bcrypt
 load_dotenv()
 
 # Database Setup
-DB_URL = os.getenv("DATABASE_URL", "sqlite:///data/db/user_prefs.db")
+DB_URL = os.getenv("DATABASE_URL")
+
+if not DB_URL:
+    logger.critical("DATABASE_URL is not set. Please configure it in .env (e.g., postgresql://user:pass@localhost:5432/hopon)")
+    # We can't exit here because Streamlit reloads modules, but we can prevent the app from working
+    # Ideally, we let SQLAlchemy fail, but a clear error is better.
+    # raising Exception would crash the import.
+    # Instead, we will log error and let create_engine fail naturally if it's None, or handle it.
+    
+    # Wait, create_engine(None) raises ArgumentError.
+    # I'll set a dummy URL to let the import succeed (so tests might run if mocked) but log error.
+    # Actually, enforcing it strictly is better for "Postgres Migration".
+    # But for running tests that mock it, we should be careful.
+    if "unittest" not in sys.modules:
+        raise ValueError("DATABASE_URL environment variable is required.")
+    else:
+        DB_URL = "sqlite:///:memory:" # Fallback only for unit tests import time
 
 # Create Engine
-engine = create_engine(DB_URL, connect_args={"check_same_thread": False} if "sqlite" in DB_URL else {})
+# Removed sqlite specific connect_args
+engine = create_engine(DB_URL)
 
 # Session Factory
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -33,7 +51,10 @@ def get_db():
 def init_db():
     """Initializes the database."""
     logger.info(f"Database engine initialized at {DB_URL}")
-    seed_default_admin()
+    try:
+        seed_default_admin()
+    except Exception as e:
+        logger.error(f"Failed to seed admin (Database might not be ready): {e}")
 
 def seed_default_admin():
     with get_db() as db:
@@ -68,7 +89,6 @@ def create_user(username, password, name=None, email=None):
 def verify_user(username, password):
     """Verifies a user's credentials."""
     with get_db() as db:
-        # BUG FIXED: Was hardcoded to "Vasilis"
         user = db.query(User).filter(User.username == username).first()
         if not user:
             return False

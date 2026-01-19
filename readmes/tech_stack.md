@@ -12,7 +12,7 @@ This project is built with the following core technologies:
 * **Database (Backend):** 
     *   **ORM:** [SQLAlchemy](https://www.sqlalchemy.org/) - Abstraction layer for database interactions.
     *   **Migrations:** [Alembic](https://alembic.sqlalchemy.org/) - Schema version control.
-    *   **Driver:** SQLite (Dev) / PostgreSQL (Prod support via `psycopg2`).
+    *   **Engine:** **PostgreSQL** (Required). The application is stateless and requires an external Postgres database (e.g., Neon, Supabase, AWS RDS).
 * **Logging:** [Loguru](https://loguru.readthedocs.io/en/stable/) - For simple and effective application logging.
 
 ## AI & Semantic Search
