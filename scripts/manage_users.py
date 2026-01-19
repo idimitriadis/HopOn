@@ -9,9 +9,10 @@ from utils.db import create_user, get_db, delete_user
 from utils.models import User
 
 def add_user(args):
-    """Adds a new user."""
+    """Adds a new user (Simple)."""
     print(f"Creating user '{args.username}'...")
-    user_id = create_user(args.username, args.password, args.name, args.email)
+    # Name defaults to Username, Email is None
+    user_id = create_user(args.username, args.password, name=args.username, email=None)
     if user_id:
         print(f"Success! User ID: {user_id}")
     else:
@@ -21,57 +22,49 @@ def list_users(args):
     """Lists all users."""
     with get_db() as db:
         users = db.query(User).all()
-        print(f"{'ID':<5} {'Username':<20} {'Name':<20} {'Email':<30}")
-        print("-" * 75)
+        print(f"{'ID':<5} {'Username':<20} {'Name':<20}")
+        print("-" * 50)
         for u in users:
-            print(f"{u.id:<5} {u.username:<20} {u.name or '':<20} {u.email or '':<30}")
+            print(f"{u.id:<5} {u.username:<20} {u.name or '':<20}")
 
 def delete_user_cli(args):
-    """Deletes a user by Username or ID."""
+    """Deletes a user by Username."""
     with get_db() as db:
-        user = None
-        if args.id:
-            user = db.query(User).filter(User.id == int(args.id)).first()
-        elif args.username:
-            user = db.query(User).filter(User.username == args.username).first()
+        user = db.query(User).filter(User.username == args.username).first()
         
         if not user:
-            print("User not found.")
+            print(f"User '{args.username}' not found.")
             return
 
         if not args.yes:
-            confirm = input(f"Are you sure you want to delete user '{user.username}' and ALL their data? (y/N): ")
+            confirm = input(f"Delete user '{user.username}'? (y/N): ")
             if confirm.lower() != 'y':
-                print("Operation cancelled.")
+                print("Cancelled.")
                 return
 
         if delete_user(user.id):
             print(f"User '{user.username}' deleted.")
         else:
-            print("Failed to delete user.")
+            print("Failed.")
 
 def main():
-    parser = argparse.ArgumentParser(description="HopOn User Management")
+    parser = argparse.ArgumentParser(description="HopOn Simple Admin CLI")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    # Add User
-    add_parser = subparsers.add_parser("add", help="Add a new user")
-    add_parser.add_argument("username", help="Username")
-    add_parser.add_argument("password", help="Password")
-    add_parser.add_argument("--name", help="Full Name")
-    add_parser.add_argument("--email", help="Email")
+    # ADD
+    add_parser = subparsers.add_parser("add", help="Create a new user")
+    add_parser.add_argument("username", help="Login Username")
+    add_parser.add_argument("password", help="Login Password")
     add_parser.set_defaults(func=add_user)
 
-    # List Users
-    list_parser = subparsers.add_parser("list", help="List all users")
+    # LIST
+    list_parser = subparsers.add_parser("list", help="Show all users")
     list_parser.set_defaults(func=list_users)
 
-    # Delete User
-    del_parser = subparsers.add_parser("delete", help="Delete a user")
-    group = del_parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--username", help="Username to delete")
-    group.add_argument("--id", help="User ID to delete")
-    del_parser.add_argument("-y", "--yes", action="store_true", help="Skip confirmation")
+    # DELETE
+    del_parser = subparsers.add_parser("delete", help="Remove a user")
+    del_parser.add_argument("username", help="Username to delete")
+    del_parser.add_argument("-y", "--yes", action="store_true", help="Skip check")
     del_parser.set_defaults(func=delete_user_cli)
 
     args = parser.parse_args()

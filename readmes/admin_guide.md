@@ -9,53 +9,47 @@ All user management is performed using the `scripts/manage_users.py` script. Thi
 **Prerequisite:** Ensure your virtual environment is activated.
 
 ### 1. List Users
-
 To see all registered users:
-
 ```bash
 python scripts/manage_users.py list
 ```
 
 **Output:**
-
-```table
-ID    Username             Name                 Email
----------------------------------------------------------------------------
-1     admin                Admin User           admin@example.com
-2     researcher           Dr. Smith            smith@university.edu
+```
+ID    Username             Name
+--------------------------------------------------
+1     admin                admin
+2     researcher           researcher
 ```
 
 ### 2. Add a User
-
-To create a new user:
-
+To create a new user (Username and Password are required):
 ```bash
-python scripts/manage_users.py add <username> <password> [--name "Full Name"] [--email "email@addr.com"]
+python scripts/manage_users.py add <username> <password>
 ```
 
-**Examples:**
-
+**Example:**
 ```bash
-# Minimal
-python scripts/manage_users.py add john secret123
-
-# Full Profile
-python scripts/manage_users.py add maria securepass! --name "Maria Garcia" --email "maria@lab.eu"
+python scripts/manage_users.py add admin mysecurepassword
 ```
+*(The Name will default to the Username. You can edit profile details inside the app later if needed.)*
 
 ### 3. Delete a User
+To delete a user and their data:
+```bash
+python scripts/manage_users.py delete <username>
+```
 
-(Currently manual deletion via database or python shell is required if not exposed in the script, see Phase 3).
-**Note:** Deleting a user will also delete their Watchlist and Saved Searches.
+**Example:**
+```bash
+python scripts/manage_users.py delete admin
+```
+*(You will be asked to confirm unless you add `-y`)*
 
 ## Database Migrations
-
 If you modify the database schema (models), you must run migrations:
 
 ```bash
 # Apply pending migrations
 alembic upgrade head
-
-# Create a new migration (after changing utils/models.py)
-alembic revision --autogenerate -m "Description of change"
 ```

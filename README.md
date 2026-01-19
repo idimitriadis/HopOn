@@ -49,10 +49,13 @@ For more details, see:
     ```
 
 5. **Create an Admin User:**
+
     Since registration is Invite-Only, create your first user via CLI:
 
     ```bash
-    python scripts/manage_users.py add <username> <password> --name "Your Name"
+
+    python scripts/manage_users.py add <username> <password>
+
     ```
 
 ### Running the Dashboard
