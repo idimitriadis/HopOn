@@ -29,7 +29,9 @@ For more details, see:
 ### Prerequisites
 
 * Python 3.10 or higher
-* **PostgreSQL Database** (Local or Cloud)
+* **PostgreSQL Database**
+    *   **Recommended:** Use Docker for local development.
+    *   *Alternative:* Local installation or Cloud (Neon/Supabase).
 
 ### Installation
 
@@ -39,18 +41,30 @@ For more details, see:
     ```bash
     pip install -r requirements.txt
     ```
-4. **Configure Environment:**
-    Create a `.env` file and set your database connection string:
+4. **Start Database (Docker):**
+    If you don't have a database running, start one with Docker:
     ```bash
-    DATABASE_URL=postgresql://user:password@localhost:5432/hopon
-    # Also set OPENROUTER_API_KEY if using AI features
+    docker run --name hopon-db -e POSTGRES_PASSWORD=mysecretpassword -e POSTGRES_DB=hopon -p 5433:5432 -d postgres
     ```
-5. **Initialize Database:**
+
+5. **Configure Environment:**
+    Create a `.env` file:
+    ```bash
+    # Database (Docker example on port 5433)
+    DATABASE_URL=postgresql://postgres:mysecretpassword@localhost:5433/hopon
+    
+    # AI Keys (Required for One-Pager)
+    OPENROUTER_API_KEY=sk-or-v1-...
+    GEMINI_API_KEY=... 
+    ```
+
+6. **Initialize Database:**
     Run migrations to set up the schema:
     ```bash
     alembic upgrade head
     ```
-6. **Create an Admin User:**
+
+7. **Create an Admin User:**
     Since registration is Invite-Only, create your first user via CLI:
     ```bash
     python scripts/manage_users.py add <username> <password>
@@ -63,4 +77,4 @@ To start the web interface with integrated logging:
 ```bash
 python run.py
 ```
-**Credentials:** Log in with the username/password you created in step 6.
+**Credentials:** Log in with the username/password you created in step 7.
