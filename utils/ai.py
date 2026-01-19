@@ -42,13 +42,16 @@ def generate_project_brief(project_data: Dict[str, Any], model: str = DEFAULT_MO
     # Combine description and objective if both exist, or use whichever is available
     full_text = f"{description}\n\n{objective}".strip()
     
+    # Secure Prompt Construction using XML delimiters
     prompt = f"""
-    You are an expert technical analyst. Create a concise "One-Pager" project brief for the following EU research project. 
+    You are an expert technical analyst. Create a concise "One-Pager" project brief based ONLY on the data provided in the <project_data> block below.
     
-    Project Title: {title}
+    <project_data>
+    Title: {title}
     
     Description/Objective:
     {full_text}
+    </project_data>
     
     Please provide the output in the following Markdown format: 
     
@@ -82,13 +85,9 @@ def generate_project_brief(project_data: Dict[str, Any], model: str = DEFAULT_MO
         if 'choices' in result and len(result['choices']) > 0:
             return result['choices'][0]['message']['content']
         else:
-            logger.error(f"Unexpected response format from OpenRouter: {result}")
+            logger.error(f"Unexpected response format from OpenRouter.")
             return None
 
     except requests.exceptions.RequestException as e:
         logger.error(f"OpenRouter API request failed: {e}")
-        try:
-             logger.error(f"Response content: {response.text}")
-        except:
-             pass
         return None
