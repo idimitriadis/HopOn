@@ -1,16 +1,53 @@
 import streamlit as st
 import pandas as pd
+import streamlit_authenticator as stauth
 from dotenv import load_dotenv
 from utils.logger import setup_logger, logger
+from utils.db import get_all_users_config, get_user_id
 
 # --- Load Environment Variables ---
 load_dotenv()
 
 # --- Logger Initialization ---
-# This must be the very first action to ensure all errors are captured.
 if 'logger_configured' not in st.session_state:
     setup_logger()
     st.session_state['logger_configured'] = True
+
+st.set_page_config(page_title="HopOn Projects", layout="wide")
+
+# --- Authentication ---
+users_config = get_all_users_config()
+credentials = {'usernames': users_config}
+
+authenticator = stauth.Authenticate(
+    credentials,
+    'hopon_cookie',
+    'hopon_auth_key', # In production, verify this is random/secret
+    cookie_expiry_days=30
+)
+
+# Render Login Widget
+authenticator.login()
+
+if st.session_state["authentication_status"] is False:
+    st.error('Username/password is incorrect')
+    st.stop()
+elif st.session_state["authentication_status"] is None:
+    st.warning('Please enter your username and password')
+    st.stop()
+
+# --- Application Logic (Only runs if Authenticated) ---
+logger.info(f"User authenticated: {st.session_state['name']}")
+
+# Get internal User ID
+current_username = st.session_state['username']
+current_user_id = get_user_id(current_username)
+
+# Logout Button in Sidebar
+with st.sidebar:
+    st.write(f"Welcome, **{st.session_state['name']}**!")
+    authenticator.logout('Logout', 'main')
+    st.divider()
 
 from utils.data_loader import load_projects, load_orgs
 from utils.db import get_watchlist
@@ -20,7 +57,6 @@ from components.project_list import render_project_list
 from components.metrics import render_metrics
 from components.charts import render_charts, render_coordinator_stats, render_project_timeline, render_choropleth_map
 
-st.set_page_config(page_title="HopOn Projects", layout="wide")
 logger.info("Application started/reloaded.")
 
 # --- Semantic Search Initialization ---
@@ -60,8 +96,8 @@ if not df_organizations.empty:
     df_organizations['country'] = df_organizations['country'].map(country_mapping)
 
 # Render Sidebar and get filters
-filters = render_sidebar(projects)
-user_id = filters.get('user_id')
+# We pass the authenticated user_id to the sidebar
+filters = render_sidebar(projects, current_user_id) 
 
 # Apply filters
 if not projects.empty and filters:
@@ -72,9 +108,6 @@ if not projects.empty and filters:
         filtered_df = filtered_df[filtered_df['startDate'] >= pd.to_datetime(filters['start_date'])]
     if filters['end_date']:
         filtered_df = filtered_df[filtered_df['endDate'] <= pd.to_datetime(filters['end_date'])]
-
-    # Always apply this mandatory filter
-    # filtered_df = filtered_df[filtered_df['endDate'] > pd.to_datetime("2027-09-25")]
 
     # Cluster and Funding Scheme filters
     if filters['selected_clusters']:
@@ -94,8 +127,8 @@ if not projects.empty and filters:
     
     # Watchlist Filter
     if filters.get('show_watchlist'):
-        if user_id:
-            watchlist_ids = get_watchlist(user_id)
+        if current_user_id:
+            watchlist_ids = get_watchlist(current_user_id)
             filtered_df = filtered_df[filtered_df['id'].isin(watchlist_ids)]
         else:
             filtered_df = filtered_df[filtered_df['id'].isin([])]
@@ -124,7 +157,7 @@ with tab1:
         st.write(f"**Min Start Date:** {min_date}")
         st.write(f"**Max End Date:** {max_date}")
 
-    selected_project = render_project_list(filtered_df, user_id)
+    selected_project = render_project_list(filtered_df, current_user_id)
 
     # --- AI Project Brief ---
     if selected_project:

@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import json
-from utils.db import save_search, get_saved_searches, delete_search, get_users, create_user, delete_user
+from utils.db import save_search, get_saved_searches, delete_search
 from utils.logger import logger
 
 def reset_filters_to_defaults():
@@ -15,7 +15,13 @@ def reset_filters_to_defaults():
     st.session_state['filter_id'] = ""
     st.session_state['filter_objective'] = ""
 
-def render_sidebar(projects):
+def render_sidebar(projects, current_user_id):
+    """
+    Renders the sidebar filters.
+    Args:
+        projects: The DataFrame of projects.
+        current_user_id: The ID of the currently logged-in user.
+    """
     # --- Step 2 (Apply): Check for and apply a pending search load at the start of the run ---
     if 'search_to_load' in st.session_state:
         logger.info("Applying pending search load to session state.")
@@ -32,48 +38,12 @@ def render_sidebar(projects):
         # Clean up the temporary key to prevent re-applying on the next rerun
         del st.session_state.search_to_load
 
-    st.sidebar.header("User Profile")
-    # ... (rest of the user management UI remains the same)
-    
-    # --- Profile Management and Filter Initialization ---
-    # ...
-    # (The following is a condensed representation of the existing user profile logic)
-    users = get_users() 
-    user_options = {u['username']: u['id'] for u in users}
-    def on_user_change(): reset_filters_to_defaults()
-    user_names = list(user_options.keys())
-    try:
-        index = user_names.index(st.session_state.get('newly_created_user', ''))
-        del st.session_state['newly_created_user'] 
-    except ValueError:
-        index = 0
-    selected_username = st.sidebar.selectbox("Current User", options=user_names, index=index, on_change=on_user_change, key="user_selector")
-    if 'confirming_delete' not in st.session_state: st.session_state.confirming_delete = False
-    if st.session_state.confirming_delete:
-        if st.dialog(title=f"Delete User: {selected_username}?"):
-            st.warning(f"Are you sure you want to permanently delete **{selected_username}**?")
-            if st.button("Yes, Delete Permanently", type="primary"):
-                delete_user(user_options[selected_username]); st.session_state.confirming_delete = False; on_user_change(); st.success(f"Deleted {selected_username}"); st.rerun()
-        else:
-            st.session_state.confirming_delete = False; st.rerun()
-    with st.sidebar.popover("⚙️ Manage Profiles", use_container_width=True):
-        new_username = st.text_input("New Username", key="new_user_input")
-        if st.button("Create"):
-            if new_username:
-                if new_username in user_options: st.error("User exists.")
-                else: create_user(new_username); st.session_state['newly_created_user'] = new_username; on_user_change(); st.rerun()
-            else: st.warning("Enter name.")
-        if selected_username:
-            if st.button("Delete User", type="secondary"): st.session_state.confirming_delete = True; st.rerun()
-    current_user_id = user_options.get(selected_username)
-    st.session_state['current_user_id'] = current_user_id
-    st.sidebar.markdown("---")
     st.sidebar.header("Project Filters")
 
     if projects.empty: return {}
     if 'filter_clusters' not in st.session_state: reset_filters_to_defaults()
     
-    # --- Render Filter Widgets (Now safe to do) ---
+    # --- Render Filter Widgets ---
     show_watchlist = st.sidebar.checkbox("Show Favorites Only", key='filter_watchlist')
     min_date = projects['startDate'].min(); max_date = projects['endDate'].max()
     start_date = st.sidebar.date_input("Start Date", min_value=min_date, max_value=max_date, key='filter_start_date', value=None)
@@ -109,10 +79,7 @@ def render_sidebar(projects):
                 if st.button("Delete"):
                     delete_search(search_options[selected_search_name]['id']); st.rerun()
 
-    # (Save Search and return logic remains the same)
-    if current_user_id:
         with st.sidebar.expander("Save Current Search"):
-            # ... (save logic)
             new_search_name = st.text_input("Name for this search")
             if st.button("Save Search"):
                 if new_search_name:
