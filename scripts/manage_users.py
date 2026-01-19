@@ -10,6 +10,13 @@ from utils.models import User
 
 def add_user(args):
     """Adds a new user (Simple)."""
+    if not args.username or not args.username.strip():
+        print("Error: Username cannot be empty.")
+        return
+    if not args.password or not args.password.strip():
+        print("Error: Password cannot be empty.")
+        return
+
     print(f"Creating user '{args.username}'...")
     # Name defaults to Username, Email is None
     user_id = create_user(args.username, args.password, name=args.username, email=None)
