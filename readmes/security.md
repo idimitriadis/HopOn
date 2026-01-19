@@ -1,29 +1,34 @@
 # Security Architecture & Decisions
 
-This document outlines the security measures implemented in HopOn to protect against common vulnerabilities, specifically focusing on AI interactions and data handling.
+This document outlines the security measures implemented in HopOn to protect against common vulnerabilities, specifically focusing on AI interactions, data handling, and access control.
 
-## 1. AI Safety & Prompt Injection
+## 1. Authentication & Session Management
+**Architecture:**
+*   **Library:** `streamlit-authenticator` handles session cookies and password management.
+*   **Hashing:** Passwords are hashed using **Bcrypt** before storage.
+*   **Session Security:** 
+    *   Auth cookies expire after 30 days.
+    *   The application logic is protected by a strict `authentication_status` check at the entry point (`app.py`).
+
+## 2. AI Safety & Prompt Injection
 **Risk:** "Prompt Injection" where malicious instructions hidden in the project data (e.g., in a project description from CORDIS) could override the system prompt and manipulate the AI's output.
 
 **Mitigation:**
 *   **XML Delimiters:** We use strict XML-style tags (`<project_data>...</project_data>`) to wrap user-provided content. The system prompt is explicitly instructed to *only* process information within these tags.
 *   **Sanitization:** The `utils/ai.py` module constructs prompts defensively, ensuring that data is treated as context, not instruction.
 
-## 2. Secrets Management & Logging
+## 3. Secrets Management & Logging
 **Risk:** Leaking API keys (like `OPENROUTER_API_KEY`) or sensitive PII in application logs or error tracebacks.
 
 **Mitigation:**
-*   **Log Sanitization:** We explicitly removed code that logged raw API response bodies (`response.text`) in error handlers, as these can sometimes contain echoed keys or sensitive session data.
-*   **Environment Variables:** All secrets are managed via `.env` and `python-dotenv`, never hardcoded.
+*   **Log Sanitization:** We explicitly removed code that logged raw API response bodies (`response.text`) in error handlers.
+*   **Environment Variables:** All secrets are managed via `.env` and `python-dotenv`.
 
-## 3. Dependency Management
-**Risk:** Vulnerabilities in third-party packages (e.g., `nbconvert` in the Jupyter ecosystem) potentially exposing the development environment.
+## 4. Deployment Security
+**Database:**
+*   **Development:** Uses local SQLite (`user_prefs.db`).
+*   **Production:** The architecture supports **PostgreSQL** via SQLAlchemy. When deploying to stateless containers (e.g., Streamlit Cloud), you **must** provide a `DATABASE_URL` environment variable pointing to a persistent external database (e.g., Supabase, Neon).
 
-**Strategy:**
-*   **Monitoring:** We use `osv-scanner` to audit dependencies.
-*   **Scope Awareness:** We differentiate between runtime vulnerabilities (critical) and development/notebook vulnerabilities (managed by keeping dev tools updated).
-
-## 4. Local-Only Security Model
-**Decision:** HopOn is architected as a **local, single-user application**.
-*   **Authentication:** We intentionally do not implement complex auth (OAuth/Passwords) because the app runs on `localhost`. The "User ID" system is for personalization (watchlists), not security.
-*   **Network:** The app binds to localhost. Deployment to a public server is **strongly discouraged** without an external authentication layer (like a VPN or Reverse Proxy with Auth).
+**Admin Access:**
+*   Registration is **Invite Only**.
+*   Users can only be created via the CLI script (`scripts/manage_users.py`), preventing unauthorized public sign-ups.
