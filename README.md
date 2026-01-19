@@ -9,9 +9,9 @@ The application follows a simple, functional structure suitable for Streamlit de
 * `app.py`: The main entry point. Handles **Authentication** and routing.
 * `components/`: Modular UI components (`sidebar.py`, `project_list.py`).
 * `utils/`: Backend logic:
-    *   `data_loader.py`: Efficient Parquet/CSV hybrid data loading.
-    *   `db.py` & `models.py`: **SQLAlchemy ORM** layer for database interactions.
-    *   `ai.py`: Interface for GenAI features.
+  * `data_loader.py`: Efficient Parquet/CSV hybrid data loading.
+  * `db.py` & `models.py`: **SQLAlchemy ORM** layer for database interactions.
+  * `ai.py`: Interface for GenAI features.
 * `migrations/`: **Alembic** database migration scripts.
 * `data/`:
   * `raw/` & `processed/`: Project data (CSV/Parquet).
@@ -36,16 +36,21 @@ For more details, see:
 1. **Clone the repository and navigate into it.**
 2. **Create and activate a virtual environment.**
 3. **Install dependencies:**
+
     ```bash
     pip install -r requirements.txt
     ```
+
 4. **Initialize Database:**
     The application uses Alembic for migrations. Run this to set up the database:
+
     ```bash
     alembic upgrade head
     ```
+
 5. **Create an Admin User:**
     Since registration is Invite-Only, create your first user via CLI:
+
     ```bash
     python scripts/manage_users.py add <username> <password> --name "Your Name"
     ```
@@ -57,4 +62,5 @@ To start the web interface with integrated logging:
 ```bash
 python run.py
 ```
+
 **Credentials:** Log in with the username/password you created in step 5.

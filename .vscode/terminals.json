@@ -4,7 +4,7 @@
         {
             "name": "App",
             "commands": [
-                "streamlit run app.py"
+                "python run.py"
             ]
         },
         {

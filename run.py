@@ -3,6 +3,10 @@ import time
 import sys
 import os
 from loguru import logger
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Configuration
 LOG_FILE = "logs/hopon.log"
