@@ -75,6 +75,8 @@ logs/
 *.parquet
 *.pkl
 
+deployment_dist/
+
 # Conductor Wizard State
 conductor/setup_state.json
 

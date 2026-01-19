@@ -7,12 +7,12 @@ This project is built with the following core technologies:
 * **Authentication:** [Streamlit-Authenticator](https://github.com/mkhorasani/Streamlit-Authenticator) - Secure session management and cookie handling.
 * **Data Manipulation:** [Pandas](https://pandas.pydata.org/) - For data processing.
 * **Data Storage:**
-    *   **Cache:** Parquet (Compressed Binary) for high-speed data loading.
-    *   **Source:** CSV (`|` delimited) for compatibility with external workflows.
-* **Database (Backend):** 
-    *   **ORM:** [SQLAlchemy](https://www.sqlalchemy.org/) - Abstraction layer for database interactions.
-    *   **Migrations:** [Alembic](https://alembic.sqlalchemy.org/) - Schema version control.
-    *   **Engine:** **PostgreSQL** (Required). The application is stateless and requires an external Postgres database (e.g., Neon, Supabase, AWS RDS).
+  * **Cache:** Parquet (Compressed Binary) for high-speed data loading.
+  * **Source:** CSV (`|` delimited) for compatibility with external workflows.
+* **Database (Backend):**
+  * **ORM:** [SQLAlchemy](https://www.sqlalchemy.org/) - Abstraction layer for database interactions.
+  * **Migrations:** [Alembic](https://alembic.sqlalchemy.org/) - Schema version control.
+  * **Engine:** **PostgreSQL** (Required). The application is stateless and requires an external Postgres database (e.g., Neon, Supabase, AWS RDS).
 * **Logging:** [Loguru](https://loguru.readthedocs.io/en/stable/) - For simple and effective application logging.
 
 ## AI & Semantic Search
