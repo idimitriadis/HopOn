@@ -63,7 +63,7 @@ with tab1:
     # --- Filters ---
     st.sidebar.header("Project Filters")
 
-    min_end_date = max(projects['endDate'].min(), pd.to_datetime("2027-09-25"))
+    min_end_date = max(projects['endDate'].max(), pd.to_datetime("2027-09-25"))
 
     # Date range filter
     start_date = st.sidebar.date_input("Start Date", min_value=min_date, max_value=max_date, value=min_date)
